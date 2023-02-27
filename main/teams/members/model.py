@@ -31,8 +31,7 @@ class MemberProfile(db.Model):
     created_on=db.Column(db.DateTime, server_default=db.func.now())
 
     def __repr__(self):
-        return f'<UserId:{self.id}>'
-    
+        return f'<UserId:{self.id}>' 
     def to_json(self):
         return {
            "user_id":self.user_id,
