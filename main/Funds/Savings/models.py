@@ -1,4 +1,4 @@
-from main import db
+from main.extension import db
 
 class Savings(db.Model):
     id=db.Column(db.BigInteger(),nullable=False,primary_key=True)

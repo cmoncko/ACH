@@ -1,17 +1,33 @@
 from flask import Flask
-from main.extenstions import db
+from .extenstions import db
 
 app=Flask(__name__,instance_relative_config=True)
-
 app.config.from_prefixed_env()
 
-app.config['SQLALCHEMY_DATABASE_URI']='sql+mysql://root:password@localhost:3306/main'
-app.conig['SQLALCHEMY_TRACK_MODIFICATION']=True
+app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:password@localhost:3306/ACH'
+app.config['SQLALCHEMY_TRACK_MODIFICATION']=True
 
 db.init_app(app)
 
-from main.teams.members.model import *
+#Team
+from main.Teams.Members.models import *
+from main.Teams.Incharge.models import *
 
-from main.teams.members.views import member
+from main.Teams.Members.views import member
+from main.Teams.Incharge.views import incharge
+from main.Teams.Leader.views import leader
 
 app.register_blueprint(member)
+app.register_blueprint(incharge)
+app.register_blueprint(leader)
+
+
+#Funds
+from main.Funds.Santha.models import *
+from main.Funds.Savings.models import *
+
+from main.Funds.Santha.views import santha
+
+app.register_blueprint(santha)
+
+

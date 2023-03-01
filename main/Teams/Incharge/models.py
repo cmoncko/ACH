@@ -1,4 +1,4 @@
-from main import db
+from main.extenstions import db
 
 class Employee(db.Model):
     id=db.Column(db.BigInteger(),primary_key=True)

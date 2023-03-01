@@ -1,6 +1,6 @@
 from flask import Blueprint,request,jsonify
 from main.extenstions import db
-from main.teams.members.model import MemberProfile
+from main.Teams.Members.models import MemberProfile
 
 member=Blueprint('member',__name__,url_prefix='/member')
 
@@ -78,17 +78,21 @@ def showMembers():
         search=request.args['search']
         page=request.args['page']
         per_page=request.args['per_page']
+        all_members=MemberProfile.query.paginate(page=0,per_page=0,error_out=False)
         if search:
-            member=MemberProfile.query.filter(MemberProfile.name.contains(search))
+            member=MemberProfile.query.filter((MemberProfile.name.contains(search)) | 
+                                              (MemberProfile.mobile_no.contains(search)) | 
+                                              (MemberProfile.id.contains(search)))
             return jsonify({
-                "data": [MemberProfile.to_json(i) for i in member]
+                "data": [MemberProfile.to_json(i) for i in member],
+                "total_members": all_members.total
             })
 
         else:
             members=MemberProfile.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
             return jsonify({
                 "data":[MemberProfile.to_json(member) for member in members.items],
-                "total": members.total
+                "total_members": all_members.total
             })
         
         # else:
