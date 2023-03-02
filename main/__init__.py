@@ -27,7 +27,10 @@ from main.Funds.Santha.models import *
 from main.Funds.Savings.models import *
 
 from main.Funds.Santha.views import santha
+from main.Funds.Savings.views import savings 
 
 app.register_blueprint(santha)
+app.register_blueprint(savings)
+
 
 

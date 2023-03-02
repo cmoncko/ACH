@@ -7,7 +7,6 @@ class Savings(db.Model):
     year=db.Column(db.Integer())
     month=db.Column(db.Integer())
     week=db.Column(db.Integer())
-    initial_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     transaction_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     transaction_type=db.Column(db.Integer(),server_default='0',nullable=False)
     final_balance=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
