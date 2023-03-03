@@ -32,5 +32,7 @@ from main.Funds.Savings.views import savings
 app.register_blueprint(santha)
 app.register_blueprint(savings)
 
+#Services
+from main.Services.Requests.models import *
 
 
