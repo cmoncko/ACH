@@ -35,4 +35,7 @@ app.register_blueprint(savings)
 #Services
 from main.Services.Requests.models import *
 
+from main.Services.Requests.views import requests
+
+app.register_blueprint(requests)
 
