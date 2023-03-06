@@ -1,5 +1,5 @@
 from flask import Blueprint,jsonify,request
-from main.extenstions import db
+from main.extensions import db
 from datetime import datetime
 from main.Teams.Members.models import MemberProfile
 from main.Funds.Savings.models import Savings
@@ -94,7 +94,7 @@ def withdraw():
                 db.session.commit()
     
                 return jsonify({
-                    "message":"payment detail added successfully."
+                    "message":"withdraw detail added successfully."
                 })
             
             else:
@@ -220,6 +220,98 @@ def santhaDetails():
                     "data":data
                 })
 
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@savings.route('saving/<int:id>')
+def savingPayments(id):
+    try:
+        payments=Savings.query.filter((Savings.member_id==id) & (Savings.transaction_type==0))
+        member=MemberProfile.query.filter(MemberProfile.id==id)
+        memberExist=False
+        paymentExist=False
+        for mem in member:
+            memberExist=True
+            name=mem.name
+        data=[]
+        for payment in payments:
+            paymentExist=True
+            pid=payment.id
+            amount=payment.transaction_amount
+            month=payment.month
+            x=datetime(2020,month,1)
+            pmonth=x.strftime("%B")
+            week=str(payment.week)+"th"
+            received_on=str(payment.transaction_date)
+
+            info={
+                "id":pid,
+                "amount":amount,
+                "month":pmonth,
+                "week":week,
+                "received_on":received_on
+            }
+            data.append(info)
+        if memberExist:
+            if paymentExist:
+                return jsonify({
+                    "name":name,
+                    "id":id,
+                    "data":data
+                })
+            else:
+                return jsonify({
+                    "message":"No payments exist!"
+                })
+        else:
+            return jsonify({
+                    "message":"Member Not Exist!"
+                })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@savings.route('withdraw/<int:id>')
+def savingWithdraws(id):
+    try:
+        withdraws=Savings.query.filter((Savings.member_id==id) & (Savings.transaction_type==1))
+        member=MemberProfile.query.filter(MemberProfile.id==id)
+        memberExist=False
+        withdrawExist=False
+        for mem in member:
+            name=mem.name
+            memberExist=True
+        data=[]
+        for withdraw in withdraws:
+            withdrawExist=True
+            pid=withdraw.id
+            amount=withdraw.transaction_amount
+            received_on=str(withdraw.transaction_date)
+
+            info={
+                "id":pid,
+                "amount":amount,
+                "received_on":received_on
+            }
+            data.append(info)
+        if memberExist:
+            if withdrawExist:
+                return jsonify({
+                    "name":name,
+                    "id":id,
+                    "data":data
+                })
+            else:
+                return jsonify({
+                    "message":"No withdraws exist!"
+                })
+        else:
+            return jsonify({
+                    "message":"Member Not Exist!"
+                })
     except Exception as e:
         return jsonify({
             "error":str(e)

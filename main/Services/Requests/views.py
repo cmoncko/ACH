@@ -2,6 +2,7 @@ from flask import Blueprint,jsonify,request
 from main.Services.Requests.models import LoanRequest
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
+from datetime import datetime
 
 requests=Blueprint('request',__name__,url_prefix='/request')
 
@@ -27,7 +28,7 @@ def sendRequest():
         action_by_user=None
         pension_monthly_amount=None
         benefit_type_id=None
-        final_payable_amount=None
+        final_payable_amount=None 
 
         if request_loan_type==0 or request_loan_type==1 or request_loan_type==2:
             loan_amount=data.get('loan_amount')
@@ -66,3 +67,135 @@ def sendRequest():
         return jsonify({
             "error":str(e)
         })
+
+@requests.route('/show-details')
+def showDetails():
+    try:
+        page=request.args['page']
+        per_page=request.args['per_page']
+        search=request.args['search']
+        if search:
+            data=[]
+            members=MemberProfile.query.filter(MemberProfile.name.contains(search))
+            for member in members:
+                member_id=member.id
+                name=member.name
+                details=LoanRequest.query.filter(LoanRequest.requested_by==member_id)
+                for detail in details:
+                    loan_id=detail.id
+                    request_type=detail.request_loan_type
+                    applied_date=detail.appied_on
+                    applied_on=str(applied_date)
+                    date=str(detail.approved_on)
+                    
+                    #calculate days elapsed
+                    if date=="None":
+                        date_list=str(applied_on).split('-')
+                        x=datetime(int(date_list[0]),int(date_list[1]),int(date_list[2]))
+                        y=datetime.now()
+                        a=x.strftime("%j")
+                        b=y.strftime("%j")
+                    else:
+                        date_list=str(applied_on).split('-')
+                        date_list2=str(date).split('-')
+                        x=datetime(int(date_list[0]),int(date_list[1]),int(date_list[2]))
+                        y=datetime(int(date_list2[0]),int(date_list2[1]),int(date_list2[2]))
+                        a=x.strftime("%j")
+                        b=y.strftime("%j")
+                    days_elapsed=int(b)-int(a)
+
+                    approval_status=detail.status
+
+                info={
+                    "id":loan_id,
+                    "name":name,
+                    "request_type":request_type,
+                    "applied_on":applied_on,
+                    "days_elapsed":days_elapsed,
+                    "approval_status":approval_status,
+                    "date":date
+                }
+                data.append(info)
+            return jsonify({
+                "data":data
+            })
+        else:
+            data=[]
+            details=LoanRequest.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
+            for detail in details:
+                loan_id=detail.id
+                member_id=detail.requested_by
+                request_type=detail.request_loan_type
+                applied_date=detail.appied_on
+                applied_on=str(applied_date)
+                date=str(detail.approved_on)
+                    
+                #calculate days elapsed
+                if date=="None":
+                    date_list=str(applied_on).split('-')
+                    x=datetime(int(date_list[0]),int(date_list[1]),int(date_list[2]))
+                    y=datetime.now()
+                    a=x.strftime("%j")
+                    b=y.strftime("%j")
+                else:
+                    date_list=str(applied_on).split('-')
+                    date_list2=str(date).split('-')
+                    x=datetime(int(date_list[0]),int(date_list[1]),int(date_list[2]))
+                    y=datetime(int(date_list2[0]),int(date_list2[1]),int(date_list2[2]))
+                    a=x.strftime("%j")
+                    b=y.strftime("%j")
+                
+                days_elapsed=int(b)-int(a)
+                approval_status=detail.status
+                members=MemberProfile.query.filter(MemberProfile.id==member_id)
+                for member in members:
+                    name=member.name
+
+                info={
+                    "id":loan_id,
+                    "name":name,
+                    "request_type":request_type,
+                    "applied_on":applied_on,
+                    "days_elapsed":days_elapsed,
+                    "approval_status":approval_status,
+                    "date":date
+                }
+                data.append(info)
+            return jsonify({
+                "data":data
+            })
+
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@requests.route('details/<int:id>')
+def details(id):
+    try:
+        details=LoanRequest.query.filter(LoanRequest.requested_by==id)
+        data=[]
+        for detail in details:
+            loan_id=detail.id
+            request_type=detail.request_loan_type
+            approved_date=detail.approved_on
+            approval_status=detail.status
+            info ={
+                "id":loan_id,
+                "request_type":request_type,
+                "approved_date":approved_date,
+                "approval_status":approval_status
+            }
+            data.append(info)
+
+        return jsonify({
+            "data":data
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@requests.route('/update/<int:id>',methods=['PUT'])
+def update(id):
+    pass

@@ -22,7 +22,7 @@ def AddMembers():
     auth_path=data.get('auth_path')
     mobile_no=data.get('mobile_no')
     join_date=data.get('join_date')
-    is_leader=data.get('is_leader')
+    is_leader=0
     leader_id=data.get('leader_id')
     incharge_id=data.get('incharge_id')
     status=data.get('status')
