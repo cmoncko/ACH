@@ -1,6 +1,6 @@
 from flask import Blueprint,request,jsonify
 from main.Teams.Incharge.models import Employee
-from main.extenstions import db
+from main.extensions import db
 from datetime import datetime
 
 incharge=Blueprint('incharge',__name__,url_prefix='/incharge')

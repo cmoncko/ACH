@@ -1,5 +1,5 @@
 from flask import Blueprint,request,jsonify
-from main.extenstions import db
+from main.extensions import db
 from main.Teams.Members.models import MemberProfile
 
 member=Blueprint('member',__name__,url_prefix='/member')
