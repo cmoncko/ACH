@@ -196,6 +196,25 @@ def details(id):
             "error":str(e)
         })
     
-@requests.route('/update/<int:id>',methods=['PUT'])
-def update(id):
-    pass
+@requests.route('/approve/<int:id>',methods=['PUT'])
+def approve(id):
+    try:
+        data=request.get_json()
+        loan_request=LoanRequest.query.get(id)
+        loan_request.status=data.get('status')
+        loan_request.approved_on=data.get('approved_on')
+        loan_request.comments=data.get('comments')
+
+        db.session.commit()
+        if data.get('status')==1:
+            return jsonify({
+                "message":"approved"
+            })
+        else:
+            return jsonify({
+                "message":"rejected"
+            }) 
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })

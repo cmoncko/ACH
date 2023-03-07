@@ -108,7 +108,7 @@ def withdraw():
         })
 
 @savings.route('/savings-details')
-def santhaDetails():
+def savingDetails():
     try:
         page=request.args['page']
         per_page=request.args['per_page']

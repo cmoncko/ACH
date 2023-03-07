@@ -34,8 +34,16 @@ app.register_blueprint(savings)
 
 #Services
 from main.Services.Requests.models import *
+from main.Services.Benefits.models import *
+from main.Services.Pension.models import *
 
 from main.Services.Requests.views import requests
+from main.Services.Benefits.views import benefit
+from main.Services.Pension.views import pension
 
 app.register_blueprint(requests)
+app.register_blueprint(benefit)
+app.register_blueprint(pension)
 
+#Settings
+from main.Settings.Services.models import *
