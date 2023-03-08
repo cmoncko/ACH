@@ -36,6 +36,10 @@ app.register_blueprint(savings)
 from main.Services.Requests.models import *
 from main.Services.Benefits.models import *
 from main.Services.Pension.models import *
+#Loan
+from main.Services.Loan.Savings.models import *
+from main.Services.Loan.Educational.models import *
+from main.Services.Loan.Business.models import*
 
 from main.Services.Requests.views import requests
 from main.Services.Benefits.views import benefit
@@ -47,3 +51,9 @@ app.register_blueprint(pension)
 
 #Settings
 from main.Settings.Services.models import *
+from main.Settings.Accounts.models import *
+
+#Accounts
+from main.Accounts.Expense.models import *
+from main.Accounts.Income.models import *
+from main.Accounts.Deposit.models import *#withdraw
