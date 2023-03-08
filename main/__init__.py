@@ -54,6 +54,10 @@ from main.Services.Loan.Business.models import*
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
 
+from main.Settings.Services.views import settingServices
+
+app.register_blueprint(settingServices)
+
 #Accounts
 from main.Accounts.Expense.models import *
 from main.Accounts.Income.models import *

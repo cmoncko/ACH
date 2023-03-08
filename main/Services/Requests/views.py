@@ -1,8 +1,11 @@
 from flask import Blueprint,jsonify,request
 from main.Services.Requests.models import LoanRequest
 from main.Teams.Members.models import MemberProfile
+from main.Services.Benefits.models import Benefits
+from main.Services.Pension.models import Pension
 from main.extensions import db
 from datetime import datetime
+import uuid
 
 requests=Blueprint('request',__name__,url_prefix='/request')
 
@@ -106,16 +109,16 @@ def showDetails():
 
                     approval_status=detail.status
 
-                info={
-                    "id":loan_id,
-                    "name":name,
-                    "request_type":request_type,
-                    "applied_on":applied_on,
-                    "days_elapsed":days_elapsed,
-                    "approval_status":approval_status,
-                    "date":date
-                }
-                data.append(info)
+                    info={
+                        "id":loan_id,
+                        "name":name,
+                        "request_type":request_type,
+                        "applied_on":applied_on,
+                        "days_elapsed":days_elapsed,
+                        "approval_status":approval_status,
+                        "date":date
+                    }
+                    data.append(info)
             return jsonify({
                 "data":data
             })
@@ -170,8 +173,8 @@ def showDetails():
             "error":str(e)
         })
 
-@requests.route('details/<int:id>')
-def details(id):
+@requests.route('profile/<int:id>')
+def profileDetails(id):
     try:
         details=LoanRequest.query.filter(LoanRequest.requested_by==id)
         data=[]
@@ -205,12 +208,27 @@ def approve(id):
         loan_request.approved_on=data.get('approved_on')
         loan_request.comments=data.get('comments')
 
-        db.session.commit()
         if data.get('status')==1:
+            if loan_request.request_loan_type==3:
+                entry=Benefits(member_id=loan_request.requested_by,
+                               benefit_type_id=loan_request.benefit_type_id,
+                               approved_on=loan_request.approved_on,
+                               reference_no=uuid.uuid4().hex[:8],
+                               approval_no=loan_request.id)
+                db.session.add(entry)
+            elif loan_request.request_loan_type==4:
+                entry=Pension(member_id=loan_request.requested_by,
+                              pension_monthly=loan_request.pension_monthly_amount,
+                              approved_on=loan_request.approved_on,
+                              reference_no=uuid.uuid4().hex[:8],
+                              approval_no=loan_request.id)
+                db.session.add(entry)
+            db.session.commit()
             return jsonify({
                 "message":"approved"
             })
         else:
+            db.session.commit()
             return jsonify({
                 "message":"rejected"
             }) 
