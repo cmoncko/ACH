@@ -217,6 +217,11 @@ def approve(id):
                                approval_no=loan_request.id)
                 db.session.add(entry)
             elif loan_request.request_loan_type==4:
+            	pension_details=Pension.query.filter(Pension.member_id==loan_request.requested_by)
+                if pension_details:
+                    return jsonify({
+                        "message":"already pension exist."
+                    })
                 entry=Pension(member_id=loan_request.requested_by,
                               pension_monthly=loan_request.pension_monthly_amount,
                               approved_on=loan_request.approved_on,

@@ -88,7 +88,7 @@ def pensionDetails():
         return jsonify({
             "error":str(e)
         })
-    
+
 @pension.route('/approve/<int:id>',methods=['PUT'])
 def update(id):
     try:
@@ -111,6 +111,76 @@ def update(id):
             "start_date":entry.start_date,
             "issued_on":entry.issued_on,
             "remarks":data.get('remarks')
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@pension.route('/pay-pension',methods=['POST'])
+def payPension():
+    try:
+        data=request.get_json()
+        member_id=data.get('member_id')
+        month=data.get('month')
+        year=data.get('year')
+        paid_date=data.get('paid_date')
+        amount=data.get('amount')
+        pension_id=data.get('pension_id')
+        detail=Pension.query.get(pension_id)
+        if detail.status==(0 or 2 or 3):
+            return jsonify({
+                "message":"Can't make payment for this pension."
+            })
+        entry=PensionPayment(member_id=member_id,
+                             pension_id=pension_id,
+                             amount=amount,
+                             month=month,
+                             year=year,
+                             paid_date=paid_date)
+        db.session.add(entry)
+        db.session.commit()
+        return jsonify({
+            "id":entry.id,
+            "member_id":entry.member_id,
+            "pension_id":entry.pension_id,
+            "paid_date":entry.paid_date,
+            "amountt":entry.amount,
+            "year":entry.year,
+            "month":entry.month
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@pension.route('/profile/<int:id>')
+def veiwPayment(id):
+    try:
+        data=[]
+        member=MemberProfile.query.get(id)
+        if not member:
+            return jsonify({
+                "message":"no member founded!"
+            })
+        payments=PensionPayment.query.filter(PensionPayment.member_id==id)
+        for payment in payments:
+            payment_id=payment.id
+            amount=payment.amount
+            month=payment.month
+            year=payment.year
+            paid_on=payment.paid_date
+            info={
+                "payment_id":payment_id,
+                "member_id":member.id,
+                "amount":amount,
+                "month":month,
+                "year":year,
+                "paid_on":paid_on
+            }
+            data.append(info)
+        return jsonify({
+            "data":data
         })
     except Exception as e:
         return jsonify({
