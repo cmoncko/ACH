@@ -53,6 +53,10 @@ from main.Services.Loan.Business.models import*
 #Settings
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
+from main.Settings.Teams.models import *
+from main.Settings.Admin.models import * 
+from main.Settings.Loans.models import *
+from main.Settings.Funds.models import *
 
 from main.Settings.Services.views import settingServices
 

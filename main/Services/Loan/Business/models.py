@@ -28,6 +28,7 @@ class BusinessLoanPayment(db.Model):
     id=db.Column(db.BigInteger(),nullable=False,primary_key=True)
     member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"),nullable=False)
     loan_id=db.Column(db.BigInteger(),db.ForeignKey("business_loans.id"),nullable=False)
+    status=db.Column(db.Integer(),server_default="0")
     month=db.Column(db.Integer(),nullable=False)
     year=db.Column(db.Integer(),nullable=False)
     emi_count=db.Column(db.Integer(),nullable=False)
