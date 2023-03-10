@@ -4,7 +4,7 @@ class Pension(db.Model):
     id = db.Column(db.BigInteger(),nullable=False,primary_key=True)
     member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"),nullable=False)
     status=db.Column(db.Integer(),nullable=False,server_default="0")#0-pending,1-active,2-rejected,4-closed.
-    pension_monthly=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
+    pension_monthly_payment=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     start_date=db.Column(db.Date())
     end_date=db.Column(db.Date())
     approved_by=db.Column(db.Integer())
