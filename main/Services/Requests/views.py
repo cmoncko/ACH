@@ -3,6 +3,9 @@ from main.Services.Requests.models import LoanRequest
 from main.Teams.Members.models import MemberProfile
 from main.Services.Benefits.models import Benefits
 from main.Services.Pension.models import Pension
+from main.Services.Loans.Savings.models import SavingsLoans
+from main.Services.Loans.Business.models import BusinessLoans
+from main.Services.Loans.Educational.models import EducationLoans
 from main.extensions import db
 from datetime import datetime
 import uuid
@@ -13,53 +16,53 @@ requests=Blueprint('request',__name__,url_prefix='/request')
 def sendRequest():
     try:
         data=request.get_json()
+
         requested_by=data.get('requested_by')
+        appied_on=data.get('applied_on')
+        comments=data.get('comments')
+        request_loan_type=data.get('request_loan_type')
+
         member=[MemberProfile.to_json(i) for i in MemberProfile.query.filter(MemberProfile.id==requested_by)]
 
         if len(member)<1:
             return jsonify({
                 "message":"Member is not exist"
             })
-        
-        appied_on=data.get('applied_on')
-        comments=data.get('comments')
-        request_loan_type=data.get('request_loan_type')
-        loan_amount=None
-        number_of_emi=None
-        interest_rate=None
-        approved_on=None
-        action_by_user=None
-        pension_monthly_amount=None
-        benefit_type_id=None
-        final_payable_amount=None 
 
         if request_loan_type==0 or request_loan_type==1 or request_loan_type==2:
             loan_amount=data.get('loan_amount')
-            print(type(loan_amount),loan_amount)
-            number_of_emi=data.get("number_of emi")
-            print(type(number_of_emi),number_of_emi)
-            interest_rate=data.get('interest_rate')
-            print(interest_rate)
-            EMI_amount=(loan_amount/number_of_emi)+interest_rate
-            final_payable_amount=EMI_amount*number_of_emi
+            number_of_emi=data.get('number_of emi')
+            EMI_amount=(loan_amount/number_of_emi)
+            interest_rate=float(f"{(EMI_amount*0.08):.2f}")
+            EMI_amount=float(f"{EMI_amount:.2f}")
+            final_payable_amount=float(f"{(EMI_amount*number_of_emi):.2f}")
 
-        if request_loan_type==3:
-            benefit_type_id=data.get('benefit_type_id')
-        if request_loan_type==4:
-            pension_monthly_amount=data.get('pension_monthly_amount')
-
-        entry=LoanRequest(requested_by=requested_by,
+            entry=LoanRequest(requested_by=requested_by,
                           appied_on=appied_on,
+                          EMI_amount=EMI_amount,
                           comments=comments,
                           request_loan_type=request_loan_type,
                           loan_amount=loan_amount,
                           number_of_emi=number_of_emi,
                           interest_rate=interest_rate,
-                          approved_on=approved_on,
-                          action_by_user=action_by_user,
-                          pension_monthly_amount=pension_monthly_amount,
-                          benefit_type_id=benefit_type_id,
                           final_payable_amount=final_payable_amount)
+
+        if request_loan_type==3:
+            benefit_type_id=data.get('benefit_type_id')
+            entry=LoanRequest(requested_by=requested_by,
+                          appied_on=appied_on,
+                          comments=comments,
+                          request_loan_type=request_loan_type,
+                          benefit_type_id=benefit_type_id,)
+        if request_loan_type==4:
+            pension_monthly_amount=data.get('pension_monthly_amount')
+            entry=LoanRequest(requested_by=requested_by,
+                          appied_on=appied_on,
+                          comments=comments,
+                          request_loan_type=request_loan_type,
+                          pension_monthly_amount=pension_monthly_amount)
+
+        
         db.session.add(entry)
         db.session.commit()
         return jsonify({
@@ -204,11 +207,17 @@ def approve(id):
     try:
         data=request.get_json()
         loan_request=LoanRequest.query.get(id)
+        if not loan_request:
+            return jsonify({
+                "message":"no request exist."
+            })
         loan_request.status=data.get('status')
         loan_request.approved_on=data.get('approved_on')
         loan_request.comments=data.get('comments')
 
         if data.get('status')==1:
+
+            #Benefits
             if loan_request.request_loan_type==3:
                 entry=Benefits(member_id=loan_request.requested_by,
                                benefit_type_id=loan_request.benefit_type_id,
@@ -216,8 +225,10 @@ def approve(id):
                                reference_no=uuid.uuid4().hex[:8],
                                approval_no=loan_request.id)
                 db.session.add(entry)
+
+            #Pension 
             elif loan_request.request_loan_type==4:
-            	pension_details=Pension.query.filter(Pension.member_id==loan_request.requested_by)
+                pension_details=Pension.query.filter(Pension.member_id==loan_request.requested_by)
                 if pension_details:
                     return jsonify({
                         "message":"already pension exist."
@@ -227,7 +238,76 @@ def approve(id):
                               approved_on=loan_request.approved_on,
                               reference_no=uuid.uuid4().hex[:8],
                               approval_no=loan_request.id)
+                
+            #Savings Loan
+            elif loan_request.request_loan_type==0:
+                EMI_start_date=data.get('EMI_start_date')
+                date_list=EMI_start_date.split('-')
+                if loan_request.number_of_emi==12:
+                    year=int(date_list[0])+1
+                else:
+                    year=int(date_list[0])+2
+                loan_end_date=f'{year}-{int(date_list[1])-1}-{date_list[2]}'
+                entry=SavingsLoans(member_id=loan_request.requested_by,
+                              loan_amount=loan_request.loan_amount,
+                              number_of_emi=loan_request.number_of_emi,
+                              EMI_amount=loan_request.EMI_amount,
+                              interest_rate=loan_request.interest_rate,
+                              finaly_payable_amount=loan_request.final_payable_amount,
+                              monthly_penalty_amount=200,
+                              EMI_start_date=EMI_start_date,
+                              loan_end_date=loan_end_date,
+                              loan_approved_date=loan_request.approved_on,
+                              ref_no=uuid.uuid4().hex[:8],
+                              approval_no=loan_request.id)
                 db.session.add(entry)
+            
+            #Business Loan
+            elif loan_request.request_loan_type==0:
+                EMI_start_date=data.get('EMI_start_date')
+                date_list=EMI_start_date.split('-')
+                if loan_request.number_of_emi==12:
+                    year=int(date_list[0])+1
+                else:
+                    year=int(date_list[0])+2
+                loan_end_date=f'{year}-{int(date_list[1])-1}-{date_list[2]}'
+                entry=BusinessLoans(member_id=loan_request.requested_by,
+                              loan_amount=loan_request.loan_amount,
+                              number_of_emi=loan_request.number_of_emi,
+                              EMI_amount=loan_request.EMI_amount,
+                              interest_rate=loan_request.interest_rate,
+                              finaly_payable_amount=loan_request.final_payable_amount,
+                              monthly_penalty_amount=200,
+                              EMI_start_date=EMI_start_date,
+                              loan_end_date=loan_end_date,
+                              loan_approved_date=loan_request.approved_on,
+                              ref_no=uuid.uuid4().hex[:8],
+                              approval_no=loan_request.id)
+                db.session.add(entry)
+
+            #Educational Loan
+            elif loan_request.request_loan_type==0:
+                EMI_start_date=data.get('EMI_start_date')
+                date_list=EMI_start_date.split('-')
+                if loan_request.number_of_emi==12:
+                    year=int(date_list[0])+1
+                else:
+                    year=int(date_list[0])+2
+                loan_end_date=f'{year}-{int(date_list[1])-1}-{date_list[2]}'
+                entry=EducationLoans(member_id=loan_request.requested_by,
+                              loan_amount=loan_request.loan_amount,
+                              number_of_emi=loan_request.number_of_emi,
+                              EMI_amount=loan_request.EMI_amount,
+                              interest_rate=loan_request.interest_rate,
+                              finaly_payable_amount=loan_request.final_payable_amount,
+                              monthly_penalty_amount=200,
+                              EMI_start_date=EMI_start_date,
+                              loan_end_date=loan_end_date,
+                              loan_approved_date=loan_request.approved_on,
+                              ref_no=uuid.uuid4().hex[:8],
+                              approval_no=loan_request.id)
+                db.session.add(entry)
+
             db.session.commit()
             return jsonify({
                 "message":"approved"

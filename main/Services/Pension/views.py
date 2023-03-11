@@ -34,6 +34,8 @@ def pensionDetails():
                     status=detail.status
                     remarks=detail.remarks
                     info={
+                        "id":detail.id,
+                        "member_id":member_id,
                         "reference_no":reference_no,
                         "name":name,
                         "pension_amount":pension_amount,
@@ -62,6 +64,7 @@ def pensionDetails():
                     members=MemberProfile.query.filter(MemberProfile.name.contains(search))
                     for member in members:
                         name=member.name
+                        member_id=member.id
                     pension_payments=PensionPayment.query.filter(PensionPayment.pension_id==pension_id)
                     total_issued_amount=0
                     for payment in pension_payments:
@@ -70,6 +73,8 @@ def pensionDetails():
                     remarks=detail.remarks
 
                     info={
+                        "id":detail.id,
+                        "member_id":member_id,
                         "reference_no":reference_no,
                         "name":name,
                         "pension_amount":pension_amount,
@@ -88,7 +93,7 @@ def pensionDetails():
         return jsonify({
             "error":str(e)
         })
-
+    
 @pension.route('/approve/<int:id>',methods=['PUT'])
 def update(id):
     try:

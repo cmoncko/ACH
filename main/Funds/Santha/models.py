@@ -1,4 +1,4 @@
-from main.extenstions import db
+from main.extensions import db
 
 class SanthaPayments(db.Model):
     id=db.Column(db.BigInteger(),nullable=False,primary_key=True)

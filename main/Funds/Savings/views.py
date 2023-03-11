@@ -131,7 +131,6 @@ def savingDetails():
                 for withdraw in withdrawDetails:
                     total_withdraw+=withdraw.transaction_amount
 
-                print(mem_id)
                 for detail in paymentDetails:
                    savingExist=True
                    previous_payment=detail.transaction_amount 

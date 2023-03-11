@@ -8,6 +8,14 @@ member=Blueprint('member',__name__,url_prefix='/member')
 def AddMembers():
     data=request.get_json()
     user_id=data.get('user_id')
+    members=MemberProfile.query.filter(MemberProfile.user_id==user_id)
+    memberExist=False
+    for member in members:
+        memberExist=True
+    if memberExist:
+        return jsonify({
+            "message":"userid already exist."
+        })
     name=data.get('name')
     DOB=data.get('DOB')
     image_path=data.get('image_path')
