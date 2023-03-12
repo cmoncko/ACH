@@ -33,6 +33,8 @@ class SavingsLoansPayment(db.Model):
     emi_count=db.Column(db.Integer(),nullable=False)
     paid_date=db.Column(db.Date())
     amount=db.Column(db.Float(precision=32,decimal_return_scale=None))
+    penalty_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),server_default="0")
+    total_amount=db.Column(db.Float(precision=32,decimal_return_scale=None))
     created_on=db.Column(db.DateTime(),server_default=db.func.now())
 
     def __repr__(self):

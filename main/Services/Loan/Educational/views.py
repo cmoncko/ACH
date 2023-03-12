@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
-from main.Services.Loans.Savings.models import SavingsLoans, SavingsLoansPayment
+from main.Services.Loans.Educational.models import EducationalLoanPayment,EducationLoans
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 from datetime import datetime
 
-savings_loan=Blueprint('savings_loan',__name__,url_prefix='/savings-loan')
+educational_loan=Blueprint('educational_loan',__name__,url_prefix='/educational-loan')
 
-@savings_loan.route('/all-loans')
+@educational_loan.route('/all-loans')
 def showAllLoans():
     try:
         page=int(request.args['page'])
@@ -18,7 +18,7 @@ def showAllLoans():
             for member in members:
                 id=member.id
                 name=member.name
-                loans=SavingsLoans.query.filter(SavingsLoans.member_id==id)
+                loans=EducationLoans.query.filter(EducationLoans.member_id==id)
                 for loan in loans:
                     SL_id=loan.id
                     ref_no=loan.ref_no
@@ -47,7 +47,7 @@ def showAllLoans():
             })
         else:
             data=[]
-            loans=SavingsLoans.query.paginate(page=page,per_page=per_page,error_out=False)
+            loans=EducationLoans.query.paginate(page=page,per_page=per_page,error_out=False)
             for loan in loans:
                     mem_id=loan.member_id
                     SL_id=loan.id
@@ -60,7 +60,7 @@ def showAllLoans():
                     issued_on=loan.issued_on
                     status=loan.status
                     if status==1:
-                        all_emis=SavingsLoansPayment.query.filter(SavingsLoansPayment.loan_id==SL_id)
+                        all_emis=EducationalLoanPayment.query.filter(EducationalLoanPayment.loan_id==SL_id)
                         penalty_ids=[]
                         for emi in all_emis:
                             dateNow=datetime.now().strftime("%Y-%m-%d").split('-')
@@ -75,7 +75,7 @@ def showAllLoans():
                             pass
                         else:
                             for emi_id in penalty_ids:
-                                entry=SavingsLoansPayment.query.get(emi_id)
+                                entry=EducationalLoanPayment.query.get(emi_id)
                                 entry.penalty_amount=200
                                 entry.total_amount=entry.amount+200
                                 db.session.commit()
@@ -105,14 +105,14 @@ def showAllLoans():
             "error":str(e)
         })
     
-@savings_loan.route('/issue/<int:id>',methods=['PUT'])
+@educational_loan.route('/issue/<int:id>',methods=['PUT'])
 def issue(id):
      try:
         data=request.get_json()
         issued_on=data.get('issued_on')
         status=data.get('status')
         comments=data.get('comments')
-        loan=SavingsLoans.query.get(id)
+        loan=EducationLoans.query.get(id)
         loan.issued_on=issued_on
         loan.comments=comments
         loan.status=status
@@ -121,7 +121,7 @@ def issue(id):
         month=int(date_list[1])#8
         year=int(date_list[0])
         for i in range(loan.number_of_emi):#24
-            entry=SavingsLoansPayment(member_id=loan.member_id,
+            entry=EducationalLoanPayment(member_id=loan.member_id,
                                      loan_id=id,
                                      month=month,
                                      year=year,
@@ -146,10 +146,10 @@ def issue(id):
                "error":str(e)
             })
      
-@savings_loan.route('/all-emi/<int:id>')
+@educational_loan.route('/all-emi/<int:id>')
 def allLoan(id):
     try:
-        details=SavingsLoansPayment.query.filter(SavingsLoansPayment.loan_id==id)
+        details=EducationalLoanPayment.query.filter(EducationalLoanPayment.loan_id==id)
         data=[]
         for detail in details:
             id=detail.id
@@ -173,10 +173,10 @@ def allLoan(id):
             "error":str(e)
         })
     
-@savings_loan.route('/pay-loan/<int:id>',methods=['PUT'])
+@educational_loan.route('/pay-loan/<int:id>',methods=['PUT'])
 def payloan(id):
     data=request.get_json()
-    emi=SavingsLoansPayment.query.get(id)
+    emi=EducationalLoanPayment.query.get(id)
     if not emi:
         return jsonify({
             "message":"id not found (or) emi not exist."

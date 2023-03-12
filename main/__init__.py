@@ -50,6 +50,14 @@ from main.Services.Loan.Savings.models import *
 from main.Services.Loan.Educational.models import *
 from main.Services.Loan.Business.models import*
 
+from main.Services.Loans.Savings.views import savings_loan
+from main.Services.Loans.Business.views import business_loan
+from main.Services.Loans.Educational.views import educational_loan
+
+app.register_blueprint(savings_loan)
+app.register_blueprint(business_loan)
+app.register_blueprint(educational_loan)
+
 #Settings
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
