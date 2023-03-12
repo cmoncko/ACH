@@ -6,6 +6,7 @@ class BusinessLoans(db.Model):
     status=db.Column(db.Integer(),nullable=False,server_default="0")
     loan_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     EMI_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
+    interest_rate=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     monthly_penalty_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)  
     number_of_emi=db.Column(db.Integer(),nullable=False)
     EMI_start_date=db.Column(db.Date(),nullable=False)

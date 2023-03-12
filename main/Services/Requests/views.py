@@ -263,7 +263,7 @@ def approve(id):
                 db.session.add(entry)
             
             #Business Loan
-            elif loan_request.request_loan_type==0:
+            elif loan_request.request_loan_type==1:
                 EMI_start_date=data.get('EMI_start_date')
                 date_list=EMI_start_date.split('-')
                 if loan_request.number_of_emi==12:
@@ -286,7 +286,7 @@ def approve(id):
                 db.session.add(entry)
 
             #Educational Loan
-            elif loan_request.request_loan_type==0:
+            elif loan_request.request_loan_type==2:
                 EMI_start_date=data.get('EMI_start_date')
                 date_list=EMI_start_date.split('-')
                 if loan_request.number_of_emi==12:
