@@ -66,10 +66,12 @@ from main.Accounts.Income.models import *
 from main.Accounts.Income.views import income
 from main.Accounts.Expense.views import expense
 from main.Accounts.Deposit.views import deposit
+from main.Accounts.Withdraw.views import withdraw
 
 app.register_blueprint(income)
 app.register_blueprint(expense)
 app.register_blueprint(deposit)
+app.register_blueprint(withdraw)
 
 #Settings
 from main.Settings.Services.models import *

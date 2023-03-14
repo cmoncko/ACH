@@ -5,9 +5,9 @@ from main.Teams.Incharge.models import Employee
 from main.extensions import db
 from uuid import uuid4
 
-deposit=Blueprint('deposit',__name__,url_prefix='/deposit')
+withdraw=Blueprint('withdraw',__name__,url_prefix='/withdraw')
 
-@deposit.route('/bank-dropdown')
+@withdraw.route('/bank-dropdown')
 def bankDropdown():
     try:
         details=BankAccounts.query.all()
@@ -34,7 +34,7 @@ def bankDropdown():
             "error":str(e)
         })
     
-@deposit.route('/incharge-dropdown')
+@withdraw.route('/incharge-dropdown')
 def inchargeDropdown():
     try:
         empDetails=Employee.query.all()
@@ -56,9 +56,9 @@ def inchargeDropdown():
         return jsonify({
             "error":str(e)
         })
-    
-@deposit.route('/add-deposit-details',methods=["POST"])
-def addDepositDetails():
+
+@withdraw.route('/add-withdraw-details',methods=["POST"])
+def addWithdrawDetails():
     try:
         data=request.get_json()
         bank_id=data.get('bank_id')
@@ -70,6 +70,7 @@ def addDepositDetails():
         reference_no=uuid4().hex[:8]
         entry=BankTransactions(bank_id=bank_id,
                                transaction_date=transaction_date,
+                               transaction_type=1,
                                transfer_type=transfer_type,
                                amount=amount,
                                balance=balance,
@@ -93,8 +94,8 @@ def addDepositDetails():
             "error":str(e)
         })
     
-@deposit.route('/show-deposit-details')
-def showDepositDetails():
+@withdraw.route('/show-withdraw-details')
+def showWithdrawDetails():
     try:
         page=int(request.args['page'])
         per_page=int(request.args['per_page'])
@@ -105,17 +106,17 @@ def showDepositDetails():
             for i in details:
                 id=i.id
                 name=i.name
-                deposits=BankTransactions.query.filter((BankTransactions.deposited_by==str(id))&
-                                                       (BankTransactions.transaction_type==0))
-                for deposit in deposits:
+                withdraws=BankTransactions.query.filter((BankTransactions.deposited_by==str(id))& 
+                                                        (BankTransactions.transaction_type==1))
+                for withdraw in withdraws:
                     info={
-                    "id":deposit.id,
-                    "bank_id":deposit.bank_id,
-                    "transaction_type":deposit.transaction_type,
-                    "transaction_date":deposit.transaction_date,
-                    "amount":deposit.amount,
-                    "deposited_by":deposit.deposited_by,
-                    "reference_no":deposit.reference_no,
+                    "id":withdraw.id,
+                    "bank_id":withdraw.bank_id,
+                    "transaction_type":withdraw.transaction_type,
+                    "transaction_date":withdraw.transaction_date,
+                    "amount":withdraw.amount,
+                    "deposited_by":withdraw.deposited_by,
+                    "reference_no":withdraw.reference_no,
                     "name":name
                     }
                     data.append(info)
@@ -123,18 +124,18 @@ def showDepositDetails():
                 "data":data
             })
         else:
-            deposits=BankTransactions.query.paginate(page=page,per_page=per_page,error_out=False)
+            withdraws=BankTransactions.query.paginate(page=page,per_page=per_page,error_out=False)
             data=[]
-            for i in deposits:
-                if i.transaction_type==1:
+            for i in withdraws:
+                if i.transaction_type==0:
                     continue
                 emp_id=int(i.deposited_by)
                 employee=Employee.query.get(emp_id)
                 info={
                     "id":i.id,
                     "bank_id":i.bank_id,
-                    "transaction_type":i.transaction_type,
                     "transaction_date":i.transaction_date,
+                    "transaction_type":i.transaction_type,
                     "amount":i.amount,
                     "deposited_by":i.deposited_by,
                     "reference_no":i.reference_no,
