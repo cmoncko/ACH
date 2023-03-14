@@ -58,21 +58,26 @@ app.register_blueprint(savings_loan)
 app.register_blueprint(business_loan)
 app.register_blueprint(educational_loan)
 
+#Accounts
+from main.Accounts.Deposit.models import *
+from main.Accounts.Expense.models import *
+from main.Accounts.Income.models import *
+
+from main.Accounts.Income.views import income
+from main.Accounts.Expense.views import expense
+from main.Accounts.Deposit.views import deposit
+
+app.register_blueprint(income)
+app.register_blueprint(expense)
+app.register_blueprint(deposit)
+
 #Settings
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
-from main.Settings.Teams.models import *
-from main.Settings.Admin.models import * 
-from main.Settings.Loans.models import *
 from main.Settings.Funds.models import *
 
 from main.Settings.Services.views import settingServices
-from main.Settings.Teams.views import settingsTeams
+from main.Settings.Accounts.views import settings_accounts
 
 app.register_blueprint(settingServices)
-app.register_blueprint(settingsTeams)
-
-#Accounts
-from main.Accounts.Expense.models import *
-from main.Accounts.Income.models import *
-from main.Accounts.Deposit.models import *#withdraw
+app.register_blueprint(settings_accounts)

@@ -6,6 +6,24 @@ import uuid
 
 income=Blueprint('income',__name__,url_prefix='/income')
 
+@income.route('/category-dropdown')
+def categoryDropdown():
+    try:
+        categories=MasterData.query.filter(MasterData.property=='category')
+        data=[]
+        for i in categories:
+            info={"id":i.id,
+                  "property":i.property,
+                  "value":i.value}
+            data.append(info)
+        return jsonify({
+            "data":data
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
 @income.route('/add-income-details',methods=['POST'])
 def addIncomeDetail():
     try:
@@ -74,6 +92,48 @@ def showIncomeDetails():
             return jsonify({
                 "data":data
             })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@income.route('/update/<int:id>',methods=['PUT'])
+def update(id):
+    try:
+        data=request.get_json()
+        entry=Income.query.get(id)
+        if not entry:
+            return jsonify({
+                "message":"income detail not exist."
+            })
+        entry.received_from=data.get('received_from')
+        entry.received_date=data.get('received_date')
+        entry.amount=data.get('amount')
+        entry.category_id=data.get('category_id')
+        db.session.commit()
+        return jsonify({
+            "id":id,
+            'received_from':entry.received_from,
+            'received_date':entry.received_date,
+            'amount':entry.amount,
+            'category_id':entry.category_id
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@income.route('/delete/<int:id>',methods=['DELETE'])
+def delete(id):
+    try:
+        entry=Income.query.get(id)
+        if not entry:
+            return jsonify({
+                "message":"income detail not exist."
+            })
+        db.session.delete(entry)
+        db.session.commit()
+        return jsonify({"message":"deleted successfully"})
     except Exception as e:
         return jsonify({
             "error":str(e)
