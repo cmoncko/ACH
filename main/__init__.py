@@ -75,9 +75,16 @@ app.register_blueprint(deposit)
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
 from main.Settings.Funds.models import *
+from main.Settings.Teams.models import *
+from main.Settings.Admin.models import *
+from main.Settings.Loans.models import *
 
 from main.Settings.Services.views import settingServices
 from main.Settings.Accounts.views import settings_accounts
+from main.Settings.Teams.views import settingsTeams
+from main.Settings.Funds.views import settingsfunds
 
 app.register_blueprint(settingServices)
 app.register_blueprint(settings_accounts)
+app.register_blueprint(settingsTeams)
+app.register_blueprint(settingsfunds)
