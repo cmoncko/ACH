@@ -1,7 +1,7 @@
 from main.extensions import db
 
-class SavingsLoans(db.Model):
-    id=db.Column(db.BigInteger(),nullable=False,primary_key=True)
+class BusinessLoans(db.Model):
+    id = db.Column(db.BigInteger(),nullable=False,primary_key=True)
     member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"),nullable=False)
     status=db.Column(db.Integer(),nullable=False,server_default="0")
     loan_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
@@ -12,7 +12,7 @@ class SavingsLoans(db.Model):
     number_of_emi=db.Column(db.Integer(),nullable=False)
     EMI_start_date=db.Column(db.Date(),nullable=False)
     loan_end_date=db.Column(db.Date(),nullable=False)
-    comments=db.Column(db.String(100))
+    comments=db.Column(db.String(200))
     loan_approved_by=db.Column(db.Integer())
     loan_approved_date=db.Column(db.Date())
     ref_no=db.Column(db.String(100))
@@ -21,13 +21,13 @@ class SavingsLoans(db.Model):
     created_on=db.Column(db.DateTime(),server_default=db.func.now())
 
     def __repr__(self):
-        return f"<userID:{self.id}>"
-    
-class SavingsLoansPayment(db.Model):
+        return f"<userid:{self.id}>"
+
+class BusinessLoanPayment(db.Model):
     id=db.Column(db.BigInteger(),nullable=False,primary_key=True)
-    member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"))
-    loan_id=db.Column(db.BigInteger(),db.ForeignKey("savings_loans.id"))
-    status=db.Column(db.integer(),server_default="0")
+    member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"),nullable=False)
+    loan_id=db.Column(db.BigInteger(),db.ForeignKey("business_loans.id"),nullable=False)
+    status=db.Column(db.Integer(),server_default='0')#0=> unpaid 1=>paid
     month=db.Column(db.Integer(),nullable=False)
     year=db.Column(db.Integer(),nullable=False)
     emi_count=db.Column(db.Integer(),nullable=False)

@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
-from main.Services.Loans.Educational.models import EducationalLoanPayment,EducationLoans
+from main.Services.Loans.Business.models import BusinessLoans, BusinessLoanPayment
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 from datetime import datetime
 
-educational_loan=Blueprint('educational_loan',__name__,url_prefix='/educational-loan')
+business_loan=Blueprint('business_loan',__name__,url_prefix='/business-loan')
 
-@educational_loan.route('/all-loans')
+@business_loan.route('/all-loans')
 def showAllLoans():
     try:
         page=int(request.args['page'])
@@ -18,7 +18,7 @@ def showAllLoans():
             for member in members:
                 id=member.id
                 name=member.name
-                loans=EducationLoans.query.filter(EducationLoans.member_id==id)
+                loans=BusinessLoans.query.filter(BusinessLoans.member_id==id)
                 for loan in loans:
                     SL_id=loan.id
                     ref_no=loan.ref_no
@@ -47,7 +47,7 @@ def showAllLoans():
             })
         else:
             data=[]
-            loans=EducationLoans.query.paginate(page=page,per_page=per_page,error_out=False)
+            loans=BusinessLoans.query.paginate(page=page,per_page=per_page,error_out=False)
             for loan in loans:
                     mem_id=loan.member_id
                     SL_id=loan.id
@@ -60,7 +60,7 @@ def showAllLoans():
                     issued_on=loan.issued_on
                     status=loan.status
                     if status==1:
-                        all_emis=EducationalLoanPayment.query.filter(EducationalLoanPayment.loan_id==SL_id)
+                        all_emis=BusinessLoanPayment.query.filter(BusinessLoanPayment.loan_id==SL_id)
                         penalty_ids=[]
                         for emi in all_emis:
                             dateNow=datetime.now().strftime("%Y-%m-%d").split('-')
@@ -75,7 +75,7 @@ def showAllLoans():
                             pass
                         else:
                             for emi_id in penalty_ids:
-                                entry=EducationalLoanPayment.query.get(emi_id)
+                                entry=BusinessLoanPayment.query.get(emi_id)
                                 entry.penalty_amount=200
                                 entry.total_amount=entry.amount+200
                                 db.session.commit()
@@ -105,14 +105,19 @@ def showAllLoans():
             "error":str(e)
         })
     
-@educational_loan.route('/issue/<int:id>',methods=['PUT'])
+@business_loan.route('/issue/<int:id>',methods=['PUT'])
 def issue(id):
-     try:
+    try:
         data=request.get_json()
         issued_on=data.get('issued_on')
         status=data.get('status')
         comments=data.get('comments')
-        loan=EducationLoans.query.get(id)
+        loan=BusinessLoans.query.get(id)
+        print(loan)
+        if not loan:
+            return jsonify({
+                "message":"loan not exist."
+            })
         loan.issued_on=issued_on
         loan.comments=comments
         loan.status=status
@@ -121,7 +126,7 @@ def issue(id):
         month=int(date_list[1])#8
         year=int(date_list[0])
         for i in range(loan.number_of_emi):#24
-            entry=EducationalLoanPayment(member_id=loan.member_id,
+            entry=BusinessLoanPayment(member_id=loan.member_id,
                                      loan_id=id,
                                      month=month,
                                      year=year,
@@ -141,15 +146,15 @@ def issue(id):
             "comments":loan.comments,
             "status":loan.status
         })
-     except Exception as e:
-          return jsonify({
+    except Exception as e:
+           return jsonify({
                "error":str(e)
             })
      
-@educational_loan.route('/all-emi/<int:id>')
+@business_loan.route('/all-emi/<int:id>')
 def allLoan(id):
     try:
-        details=EducationalLoanPayment.query.filter(EducationalLoanPayment.loan_id==id)
+        details=BusinessLoanPayment.query.filter(BusinessLoanPayment.loan_id==id)
         data=[]
         for detail in details:
             id=detail.id
@@ -173,16 +178,16 @@ def allLoan(id):
             "error":str(e)
         })
     
-@educational_loan.route('/pay-loan/<int:id>',methods=['PUT'])
+@business_loan.route('/pay-loan/<int:id>',methods=['PUT'])
 def payloan(id):
     data=request.get_json()
-    emi=EducationalLoanPayment.query.get(id)
+    emi=BusinessLoanPayment.query.get(id)
     if not emi:
         return jsonify({
             "message":"id not found (or) emi not exist."
         })
     emi.status=data.get('status')
-    if data.get('status')==0:
+    if data.get('status')==1:
         emi.paid_date=data.get('paid_date')
     else:
         emi.paid_date=None
@@ -193,5 +198,7 @@ def payloan(id):
         "month":emi.month,
         "year":emi.year,
         "paid_date":emi.paid_date,
-        "amount":emi.amount 
+        "amount":emi.amount ,
+        "penalty":emi.penalty_amount,
+        "total":emi.total_amount
     })

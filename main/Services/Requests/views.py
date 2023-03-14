@@ -300,7 +300,7 @@ def approve(id):
                               EMI_amount=loan_request.EMI_amount,
                               interest_rate=loan_request.interest_rate,
                               finaly_payable_amount=loan_request.final_payable_amount,
-                              monthly_penalty_amount=200,
+                              monthly_penalty=200,
                               EMI_start_date=EMI_start_date,
                               loan_end_date=loan_end_date,
                               loan_approved_date=loan_request.approved_on,

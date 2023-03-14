@@ -7,6 +7,7 @@ class EducationLoans(db.Model):
     loan_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     EMI_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     interest_rate=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
+    finaly_payable_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     monthly_penalty=db.Column(db.Float(precision=32,decimal_return_scale=None),nullable=False)
     number_of_emi=db.Column(db.Integer(),nullable=False)
     EMI_start_date=db.Column(db.Date(),nullable=False)
@@ -26,13 +27,13 @@ class EducationalLoanPayment(db.Model):
     id=db.Column(db.BigInteger(),nullable=False,primary_key=True)
     member_id=db.Column(db.BigInteger(),db.ForeignKey("member_profile.id"))
     loan_id=db.Column(db.BigInteger(),db.ForeignKey("education_loans.id"))
-    status=db.Column(db.Integer(),server_default="0")
+    status=db.Column(db.Integer(),server_default='0')#0=> unpaid 1=>paid
     month=db.Column(db.Integer(),nullable=False)
     year=db.Column(db.Integer(),nullable=False)
     emi_count=db.Column(db.Integer(),nullable=False)
     paid_date=db.Column(db.Date())
-    amount=db.Column(db.Float(precision=32,decimal_return_scale=None))
     penalty_amount=db.Column(db.Float(precision=32,decimal_return_scale=None),server_default="0")
+    amount=db.Column(db.Float(precision=32,decimal_return_scale=None))
     total_amount=db.Column(db.Float(precision=32,decimal_return_scale=None))
     created_on=db.Column(db.DateTime(),server_default=db.func.now())
 

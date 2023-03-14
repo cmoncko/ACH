@@ -12,6 +12,6 @@ class BankTransactions(db.Model):
     reference_no=db.Column(db.String(200))
     comments=db.Column(db.String(200))
     created_on=db.Column(db.DateTime(),server_default=db.func.now())
-
+    
     def __repr__(self):
         return f"<userid:{self.id}>"
