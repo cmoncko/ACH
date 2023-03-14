@@ -50,9 +50,9 @@ from main.Services.Loan.Savings.models import *
 from main.Services.Loan.Educational.models import *
 from main.Services.Loan.Business.models import*
 
-from main.Services.Loans.Savings.views import savings_loan
-from main.Services.Loans.Business.views import business_loan
-from main.Services.Loans.Educational.views import educational_loan
+from main.Services.Loan.Savings.views import savings_loan
+from main.Services.Loan.Business.views import business_loan
+from main.Services.Loan.Educational.views import educational_loan
 
 app.register_blueprint(savings_loan)
 app.register_blueprint(business_loan)
@@ -67,8 +67,10 @@ from main.Settings.Loans.models import *
 from main.Settings.Funds.models import *
 
 from main.Settings.Services.views import settingServices
+from main.Settings.Teams.views import settingsTeams
 
 app.register_blueprint(settingServices)
+app.register_blueprint(settingsTeams)
 
 #Accounts
 from main.Accounts.Expense.models import *
