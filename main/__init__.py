@@ -85,8 +85,11 @@ from main.Settings.Services.views import settingServices
 from main.Settings.Accounts.views import settings_accounts
 from main.Settings.Teams.views import settingsTeams
 from main.Settings.Funds.views import settingsfunds
+from main.Settings.Loans.views import settings_loans
 
 app.register_blueprint(settingServices)
 app.register_blueprint(settings_accounts)
 app.register_blueprint(settingsTeams)
 app.register_blueprint(settingsfunds)
+app.register_blueprint(settings_loans)
+
