@@ -152,4 +152,65 @@ def showIncharges():
         return jsonify({
             "error":str(e)
         })    
+
+@incharge.route('/incharge-profile/<int:id>')
+def inchargeProfile(id):
+    try:
+        incharge=Employee.query.get(id)
+        if not incharge:
+            return jsonify({
+                "message":"incharge not exist."
+            })
+        return jsonify(Employee.profile(incharge))
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })    
     
+@incharge.route('/update-incharge/<int:id>',methods=['PUT'])
+def updateIncharge(id):
+    try:
+        data=request.get_json()
+        incharge=Employee.query.get(id)
+        if not incharge:
+            return jsonify({
+                "message":"incharge not exist."
+            })
+        incharge.status=data.get('status')
+        incharge.name=data.get('name')
+        incharge.dob=data.get('dob')
+        incharge.gender=data.get('gender')
+        incharge.address=data.get('address')
+        incharge.city=data.get('city')
+        incharge.district=data.get('district')
+        incharge.state=data.get('state')
+        incharge.pincode=data.get('pincode')
+        incharge.aadhar=data.get('aadhar')
+        incharge.mobile=data.get('mobile')
+        incharge.join_date=data.get('join_date')  
+        db.session.commit()
+        return jsonify({
+            "message":"Incharge updated successully"
+            })
+    except Exception as e:
+        return jsonify({
+            "message":str(e)
+        })
+
+@incharge.route('/delete-incharge/<int:id>',methods=['DELETE'])
+def deleteIncharge(id):
+    try:
+        incharge=Employee.query.get(id)
+        if not incharge:
+                return jsonify({
+                    "message":"incharge not exist."
+                })
+        db.session.delete(incharge)
+        db.session.commit()
+        return jsonify({
+            "message":"incharge deleted successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })

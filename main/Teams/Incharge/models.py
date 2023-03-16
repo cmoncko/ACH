@@ -1,4 +1,5 @@
-from main.extenstions import db
+from main.extensions import db
+from datetime import datetime
 
 class Employee(db.Model):
     id=db.Column(db.BigInteger(),primary_key=True)
@@ -22,5 +23,61 @@ class Employee(db.Model):
 
     def __repr__(self):
         return f"<userId:{self.id}"
+    
+    def to_json(self):
+        dob=self.DOB
+        dob_date_list=str(dob).split('-') #it return ['year','month','date']
+        day=datetime.now().strftime("%Y-%m-%d")# date of today
+        date_now=day.split("-") #it return ['year','month','date']
+        dyear=int(dob_date_list[0]) # convert string to integer
+        dmonth=int(dob_date_list[1]) # '''
+        ddate=int(dob_date_list[2]) # '''
+        nyear=int(date_now[0]) # '''
+        nmonth=int(date_now[1]) # '''
+        ndate=int(date_now[2]) # '''
 
+        # check the month and date grater than or equal to dob month and date
+        if (nmonth>= dmonth) & (ndate>=ddate): 
+            age=nyear-dyear # if true return absoult value
+        else:
+            age=nyear-dyear
+        return {
+           "id":self.id,
+           "name":self.name, 
+           "age":age,
+           "gender":self.gender,
+           "city":self.city,
+           "mobile_no":self.mobile_no,
+           "incharge_id":self.incharge_id
+        }
+    def profile(self):
+        dob=self.DOB
+        dob_date_list=str(dob).split('-') #it return ['year','month','date']
+        day=datetime.now().strftime("%Y-%m-%d")# date of today
+        date_now=day.split("-") #it return ['year','month','date']
+        dyear=int(dob_date_list[0]) # convert string to integer
+        dmonth=int(dob_date_list[1]) # '''
+        ddate=int(dob_date_list[2]) # '''
+        nyear=int(date_now[0]) # '''
+        nmonth=int(date_now[1]) # '''
+        ndate=int(date_now[2]) # '''
 
+        # check the month and date grater than or equal to dob month and date
+        if (nmonth>= dmonth) & (ndate>=ddate): 
+            age=nyear-dyear # if true return absoult value
+        else:
+            age=nyear-dyear
+        return {"name":self.name,
+                "id":self.id,
+                "DOB":dob, 
+                "age":age,
+                "gender":self.gender,
+                "city":self.city,
+                "state":self.state,
+                "district":self.district,
+                "address":self.address,
+                # "leaving_date":self.leaving_date,
+                "image_path":self.image_path,
+                "aadhar_number":self.aadhar,
+                "mobile_no":self.mobile,
+                }

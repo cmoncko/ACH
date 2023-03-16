@@ -1,7 +1,6 @@
 from flask import Blueprint,request,jsonify
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
-from main.Teams.Incharge.models import Employee
 
 leader=Blueprint('leader',__name__,url_prefix='/leader')
 
@@ -98,7 +97,7 @@ def showIncharges():
                                               (MemberProfile.id.contains(search)))&
                                               (MemberProfile.is_leader==1))
             return jsonify({
-                "data": [Employee.to_json(i) for i in leader],
+                "data": [MemberProfile.to_json(i) for i in leader],
                 "total_members": count
             })
 
@@ -108,7 +107,7 @@ def showIncharges():
             for leader in leaders:
                 if leader.is_leader!=1:
                     continue
-                data.append(Employee.to_json(leader))    
+                data.append(MemberProfile.to_json(leader))    
             return jsonify({
                 "data":data,
                 "total_leaders": count
@@ -119,3 +118,83 @@ def showIncharges():
             "msg": str(e)
         })    
     
+@leader.route('/leader-profile/<int:id>')
+def leaderProfile(id):
+    try:
+        leader=MemberProfile.query.get(id)
+        if not leader:
+                return jsonify({
+                    "message":"leader not exist."
+                })
+        if leader.is_leader!=1:
+            return jsonify({
+                "message":"This is not leader"
+            })
+        return jsonify(MemberProfile.profile(leader))
+    except Exception as e:
+        return jsonify({
+            "erroe":str(e)
+        })
+    
+@leader.route('/update-leader/<int:id>',methods=['PUT'])
+def updateLeader(id):
+    try:
+        data=request.get_json()
+        member=MemberProfile.query.get(id)
+        if not leader:
+                return jsonify({
+                    "message":"leader not exist."
+                })
+        if member.is_leader!=1:
+            return jsonify({
+                "message":"This is not leader"
+            })
+        member.name=data.get('name')
+        member.DOB=data.get('DOB')
+        member.gender=data.get('gender')
+        member.address=data.get('address')
+        member.city=data.get('city')
+        member.district=data.get('district')
+        member.state=data.get('state')
+        member.pincode=data.get('pincode')
+        member.auth_type_id=data.get('auth_type_id')
+        member.auth_data=data.get('auth_data')
+        member.mobile_no=data.get('mobile_no')
+        member.join_date=data.get('join_date')
+        member.leader_id=data.get('leader_id')
+        member.incharge_id=data.get('incharge_id')
+        member.nominee_name=data.get('nominee_name')
+        member.nominee_DOB=data.get('nominee_BOB')
+        member.nominee_relation=data.get('nominee_relation')
+        member.nominee_mobileno=data.get('nominee_mobileno')
+        member.nominee_adhaarno=data.get('nominee_adhaarno')
+        db.session.commit()
+        return jsonify({
+        "msg":"member updated successfully"
+        })
+    except Exception as e:
+        return jsonify({
+        "msg":str(e)
+        })
+
+@leader.route('/delete-leader/<int:id>',methods=['DELETE'])
+def deleteLeader(id):
+    try:
+        leader=MemberProfile.query.get(id)
+        if not leader:
+                return jsonify({
+                    "message":"leader not exist."
+                })
+        if leader.is_leader!=1:
+            return jsonify({
+                "message":"This is not leader"
+            })
+        db.session.delete(leader)
+        db.session.commit()
+        return jsonify({
+            "message":"leader deleted successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "message":str(e)
+        })
