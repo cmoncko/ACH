@@ -1,6 +1,7 @@
 from flask import Blueprint,request,jsonify
 from main.extensions import db
 from main.Settings.Services.models import BenefitType
+from main.Settings.Funds.models import MasterData
 
 settingServices=Blueprint('settingServices',__name__,url_prefix='/settings-services')
 
@@ -50,6 +51,57 @@ def delete(id):
         return jsonify({
             "message":f'deleted benefit id is {Benefit_id} name is {name}'
         })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+        
+@settingServices.route('/add-minage',methods=['POST'])
+def addMinAge():
+    try:
+        data=request.get_json()
+        prperty="minage"
+        value=data.get("value")
+
+        entry=MasterData(property=property,value=value)
+        db.session.add(entry)
+        db.session.commit()
+        return jsonify({
+            'id':entry.id,
+            'name':entry.property,
+            'value':entry.value
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@settingServices.route('/show-minage')
+def showMinAge():
+    try:
+        details=MasterData.query.filter(MasterData.property=='minage')
+        data=[]
+        for i in details:
+            data.append({"id":i.id,
+		    "property":i.property,
+		    "value":i.value})
+        return jsonify({
+            "data":data
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+@settingServices.route('/update-minage/<int:id>',methods=['PUT'])
+def updateMinAge(id):
+    try:
+        details=MasterData.query.get(id)
+        data=request.get_json()
+        details.value=data.get('value')
+        db.session.commit()
+        return jsonify({"id":details.id,
+		    "property":details.property,
+		    "value":details.value})
     except Exception as e:
         return jsonify({
             "error":str(e)

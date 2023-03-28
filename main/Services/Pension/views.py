@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from main.Services.Pension.models import Pension
 from main.Teams.Members.models import MemberProfile
 from main.Services.Pension.models import PensionPayment
@@ -98,6 +98,8 @@ def pensionDetails():
 def update(id):
     try:
         data=request.get_json()
+        user=session.get('loginData')
+        user_id=user.get('userId')
         entry=Pension.query.get(id)
         if not entry:
             return jsonify({
@@ -107,6 +109,7 @@ def update(id):
         entry.status=data.get('status')
         entry.start_date=data.get('start_date')
         entry.end_date=data.get('end_date')
+        entry.approved_by=user_id
         entry.remarks=data.get('remarks')
         db.session.commit()
         return jsonify({

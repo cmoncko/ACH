@@ -1,11 +1,11 @@
-from flask import Blueprint,jsonify,request
+from flask import Blueprint,jsonify,request, session
 from main.Services.Requests.models import LoanRequest
 from main.Teams.Members.models import MemberProfile
 from main.Services.Benefits.models import Benefits
 from main.Services.Pension.models import Pension
-from main.Services.Loans.Savings.models import SavingsLoans
-from main.Services.Loans.Business.models import BusinessLoans
-from main.Services.Loans.Educational.models import EducationLoans
+from main.Services.Loan.Savings.models import SavingsLoans
+from main.Services.Loan.Business.models import BusinessLoans
+from main.Services.Loan.Educational.models import EducationLoans
 from main.extensions import db
 from datetime import datetime
 import uuid
@@ -203,8 +203,10 @@ def profileDetails(id):
         })
     
 @requests.route('/approve/<int:id>',methods=['PUT'])
-def approve(id):
+def approve(id): 
     try:
+        user=session.get('loginData')
+        user_id=user.get('userId')
         data=request.get_json()
         loan_request=LoanRequest.query.get(id)
         if not loan_request:
@@ -214,6 +216,7 @@ def approve(id):
         loan_request.status=data.get('status')
         loan_request.approved_on=data.get('approved_on')
         loan_request.comments=data.get('comments')
+        loan_request.action_by_user=user_id
 
         if data.get('status')==1:
 
@@ -221,6 +224,7 @@ def approve(id):
             if loan_request.request_loan_type==3:
                 entry=Benefits(member_id=loan_request.requested_by,
                                benefit_type_id=loan_request.benefit_type_id,
+                               approved_by=user_id,
                                approved_on=loan_request.approved_on,
                                reference_no=uuid.uuid4().hex[:8],
                                approval_no=loan_request.id)
@@ -229,18 +233,25 @@ def approve(id):
             #Pension 
             elif loan_request.request_loan_type==4:
                 pension_details=Pension.query.filter(Pension.member_id==loan_request.requested_by)
-                if pension_details:
+                for i in pension_details:
                     return jsonify({
-                        "message":"already pension exist."
+                        "message":"already pension approved."
                     })
                 entry=Pension(member_id=loan_request.requested_by,
-                              pension_monthly=loan_request.pension_monthly_amount,
+                              approved_by=user_id,
+                              pension_monthly_payment=loan_request.pension_monthly_amount,
                               approved_on=loan_request.approved_on,
                               reference_no=uuid.uuid4().hex[:8],
                               approval_no=loan_request.id)
+                db.session.add(entry)
                 
             #Savings Loan
             elif loan_request.request_loan_type==0:
+                saving_loan=SavingsLoans.query.filter(SavingsLoans.member_id==loan_request.requested_by)
+                for i in saving_loan:
+                    return jsonify({
+                        "message":"already loan approved."
+                    })
                 EMI_start_date=data.get('EMI_start_date')
                 date_list=EMI_start_date.split('-')
                 if loan_request.number_of_emi==12:
@@ -251,6 +262,7 @@ def approve(id):
                 entry=SavingsLoans(member_id=loan_request.requested_by,
                               loan_amount=loan_request.loan_amount,
                               number_of_emi=loan_request.number_of_emi,
+                              loan_approved_by=user_id,
                               EMI_amount=loan_request.EMI_amount,
                               interest_rate=loan_request.interest_rate,
                               finaly_payable_amount=loan_request.final_payable_amount,
@@ -264,6 +276,11 @@ def approve(id):
             
             #Business Loan
             elif loan_request.request_loan_type==1:
+                business_loan=BusinessLoans.query.filter(BusinessLoans.member_id==loan_request.requested_by)
+                for i in business_loan:
+                    return jsonify({
+                        "message":"already loan approved."
+                    })
                 EMI_start_date=data.get('EMI_start_date')
                 date_list=EMI_start_date.split('-')
                 if loan_request.number_of_emi==12:
@@ -273,6 +290,7 @@ def approve(id):
                 loan_end_date=f'{year}-{int(date_list[1])-1}-{date_list[2]}'
                 entry=BusinessLoans(member_id=loan_request.requested_by,
                               loan_amount=loan_request.loan_amount,
+                              loan_approved_by=user_id,
                               number_of_emi=loan_request.number_of_emi,
                               EMI_amount=loan_request.EMI_amount,
                               interest_rate=loan_request.interest_rate,
@@ -287,6 +305,11 @@ def approve(id):
 
             #Educational Loan
             elif loan_request.request_loan_type==2:
+                educational_loan=EducationLoans.query.filter(EducationLoans.member_id==loan_request.requested_by)
+                for i in educational_loan:
+                    return jsonify({
+                        "message":"already loan approved."
+                    })
                 EMI_start_date=data.get('EMI_start_date')
                 date_list=EMI_start_date.split('-')
                 if loan_request.number_of_emi==12:
@@ -296,6 +319,7 @@ def approve(id):
                 loan_end_date=f'{year}-{int(date_list[1])-1}-{date_list[2]}'
                 entry=EducationLoans(member_id=loan_request.requested_by,
                               loan_amount=loan_request.loan_amount,
+                              loan_approved_by=user_id,
                               number_of_emi=loan_request.number_of_emi,
                               EMI_amount=loan_request.EMI_amount,
                               interest_rate=loan_request.interest_rate,

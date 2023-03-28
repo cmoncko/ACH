@@ -16,4 +16,3 @@ class Benefits(db.Model):
 
     def __repr__(self) :
         return f"<userId:{self.id}"
-    

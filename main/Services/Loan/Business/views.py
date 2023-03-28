@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from main.Services.Loans.Business.models import BusinessLoans, BusinessLoanPayment
+from main.Services.Loan.Business.models import BusinessLoans, BusinessLoanPayment
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 from datetime import datetime
