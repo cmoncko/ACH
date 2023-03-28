@@ -1,6 +1,7 @@
 from flask import Blueprint,jsonify,request
 from main.extensions import db
 from datetime import datetime
+from main.Settings.Funds.models import MasterData
 from main.Teams.Members.models import MemberProfile
 from main.Funds.Santha.models import SanthaPayments
 
@@ -12,7 +13,12 @@ def paySantha():
         data=request.get_json()
         member_id=data.get('member_id')
         santha_for_year=data.get('santha_for_year')
-        santha_amount=60
+        santha_amount=MasterData.query.filter_by(property="Amount Per Year Rs").first()
+        if not santha_amount.value or santha_amount.value=="":
+            return jsonify({
+                "message":"Add santha per year amount at (Settings -> Funds -> Santha -> Amount Per Year Rs)"
+            })
+        santha_amount=int(santha_amount.value)
         received_amount=data.get('received_amount')
         received_date=data.get('received_date')
 

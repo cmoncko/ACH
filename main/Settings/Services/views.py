@@ -55,14 +55,13 @@ def delete(id):
         return jsonify({
             "error":str(e)
         })
-        
+    
 @settingServices.route('/add-minage',methods=['POST'])
 def addMinAge():
     try:
         data=request.get_json()
         prperty="minage"
         value=data.get("value")
-
         entry=MasterData(property=property,value=value)
         db.session.add(entry)
         db.session.commit()
@@ -92,8 +91,60 @@ def showMinAge():
         return jsonify({
             "error":str(e)
         })
+
 @settingServices.route('/update-minage/<int:id>',methods=['PUT'])
 def updateMinAge(id):
+    try:
+        details=MasterData.query.get(id)
+        data=request.get_json()
+        details.value=data.get('value')
+        db.session.commit()
+        return jsonify({"id":details.id,
+		    "property":details.property,
+		    "value":details.value})
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@settingServices.route('/add-maxage',methods=['POST'])
+def addMaxAge():
+    try:
+        data=request.get_json()
+        prperty="maxage"
+        value=data.get("value")
+        entry=MasterData(property=property,value=value)
+        db.session.add(entry)
+        db.session.commit()
+        return jsonify({
+            'id':entry.id,
+            'name':entry.property,
+            'value':entry.value
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+    
+@settingServices.route('/show-maxage')
+def showMaxAge():
+    try:
+        details=MasterData.query.filter(MasterData.property=='maxage')
+        data=[]
+        for i in details:
+            data.append({"id":i.id,
+		    "property":i.property,
+		    "value":i.value})
+        return jsonify({
+            "data":data
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
+
+@settingServices.route('/update-maxage/<int:id>',methods=['PUT'])
+def updateMaxAge(id):
     try:
         details=MasterData.query.get(id)
         data=request.get_json()

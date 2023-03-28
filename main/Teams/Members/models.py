@@ -27,19 +27,32 @@ class MemberProfile(db.Model):
     auth_path=db.Column(db.String(255))
     mobile_no=db.Column(db.BigInteger(),nullable=False)
     join_date=db.Column(db.Date(),nullable=False)
-    # leaving_date=db.Column(db.Date())
+    leaving_date=db.Column(db.Date())
     is_leader=db.Column(db.Integer(),server_default='0')
     leader_id=db.Column(db.BigInteger())
     incharge_id=db.Column(db.BigInteger())
     status=db.Column(db.Integer(),nullable=False,server_default="0")
     last_status_change_date=db.Column(db.Date())
     comments=db.Column(db.String(255))
-    nominee_name=db.Column(db.String(255))
+    nominee_name=db.Column(db.String(255),nullable=False)
     nominee_DOB=db.Column(db.Date())
-    nominee_relation=db.Column(db.String(255))
+    nominee_relation=db.Column(db.String(255),nullable=False)
     nominee_mobileno=db.Column(db.BigInteger())
     nominee_adhaarno=db.Column(db.BigInteger())
     created_on=db.Column(db.DateTime, server_default=db.func.now())
+    # SL=db.relationship("SavingsLoans",casecade="all,delete",backref="member_profile")
+    # SL_payment=db.relationship("SavingsLoanPaym",secondary="savings_loan_payment",casecade="all,delete")
+    # savings=db.relationship("Savings",secondary="savings",casecade="all,delete")
+    # EL=db.relationship("EducationLoan",secondary="education_loan",casecade="all,delete")
+    # EL_payment=db.relationship("EducationalLoanPayment",secondary="educational_loan_payment",casecade="all,delete")
+    # santha=db.relationship("SanthaPayments",secondary="santha_payments",casecade="all,delete")
+    # BL=db.relationship("BusinessLoan",secondary="business_loan",casecade="all,delete")
+    # pension=db.relationship("Pension",secondary="pension",casecade="all,delete")
+    # pension_payment=db.relationship("PensionPayment",secondary="pension_payment",casecade="all,delete")
+    # benefits=db.relationship("Benefits",secondary="benefits",casecade="all,delete")
+    # loan_request=db.relationship("LoanRequest",secondary="loan_request",casecade="all,delete")
+    # BL_payment=db.relationship("BusinessLoanPayment",secondary="business_loan_payment",casecade="all,delete")
+    
 
     def __repr__(self):
         return f'<UserId:{self.id}>'
@@ -136,12 +149,11 @@ class MemberProfile(db.Model):
                 benefit_type=benefit.name
         #Request
         requests=LoanRequest.query.filter(LoanRequest.requested_by==self.id)
-        total=0
+        total=requests.count()
         approved=0
         pending=0
         rejected=0
         for i in requests:
-            total+=1
             if i.status==0:
                 pending+=1
             if i.status==1:
@@ -158,13 +170,14 @@ class MemberProfile(db.Model):
                     "state":self.state,
                     "district":self.district,
                     "address":self.address,
-                    # "leaving_date":self.leaving_date,
+                    "leaving_date":self.leaving_date,
                     "image_path":self.image_path,
                     "is_leader":self.is_leader,
                     "auth_type_id":self.auth_type_id,
                     "auth_data":self.auth_data,
                     "mobile_no":self.mobile_no,
                     "leader_id":self.leader_id,
+                    "status":self.status,
                     "incharge_id":self.incharge_id
                     },
                 "Funds":{"Balance":balance,

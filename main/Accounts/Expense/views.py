@@ -6,24 +6,24 @@ import uuid
 
 expense=Blueprint('expense',__name__,url_prefix='/expense')
 
-@expense.route('/category-subcategory-dropdown')
-def categorySubcategoryDropdown():
-    try:
-        categories=CategorySubcategory.query.all()
-        data=[]
-        for i in categories:
-            info={"id":i.id,
-                  "TYPE":i.TYPE,
-                  "CATEGORY":i.CATEGORY,
-                  "SUBCATEGORY":i.SUBCATEGORY}
-            data.append(info)
-        return jsonify({
-            "data":data
-        })
-    except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+# @expense.route('/category-subcategory-dropdown')
+# def categorySubcategoryDropdown():
+#     try:
+#         categories=CategorySubcategory.query.all()
+#         data=[]
+#         for i in categories:
+#             info={"id":i.id,
+#                   "TYPE":i.TYPE,
+#                   "CATEGORY":i.CATEGORY,
+#                   "SUBCATEGORY":i.SUBCATEGORY}
+#             data.append(info)
+#         return jsonify({
+#             "data":data
+#         })
+#     except Exception as e:
+#         return jsonify({
+#             "error":str(e)
+#         })
 
 @expense.route('/add-expense-details',methods=['POST'])
 def addExpenseDetail():
@@ -79,12 +79,17 @@ def showExpenseDetails():
                 paid_date=detail.paid_date
                 amount=detail.amount
                 category_id=detail.category_id
+                cat_subcat=CategorySubcategory.query.get(category_id)
+                category=cat_subcat.CATEGORY
+                subcategory=cat_subcat.SUBCATEGORY
                 description=detail.description
                 ref_no=detail.ref_no
                 info={"id":id,
                     "received_from":paid_to,
                     "received_date":paid_date,
-                    "category_id":category_id,
+                    "category":category_id,
+                    "category":category,
+                    "sub_category":subcategory,
                     "description":description,
                     "amount":amount,
                     "ref_no":ref_no}

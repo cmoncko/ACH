@@ -1,4 +1,5 @@
 from flask import Blueprint,request,jsonify
+from main.utils import permission_required,token_required
 from main.Teams.Incharge.models import Employee
 from main.extensions import db
 from datetime import datetime
@@ -6,6 +7,8 @@ from datetime import datetime
 incharge=Blueprint('incharge',__name__,url_prefix='/incharge')
 
 @incharge.route('/new-incharge',methods=['POST'])
+@token_required
+@permission_required('edit_team')
 def newIncharge():
     data=request.get_json()
     status=data.get('status')
@@ -53,6 +56,8 @@ def newIncharge():
         })
 
 @incharge.route('/show-incharges')
+@token_required
+@permission_required('read_team')
 def showIncharges():
     try:
         page=request.args['page']
@@ -154,6 +159,8 @@ def showIncharges():
         })    
 
 @incharge.route('/incharge-profile/<int:id>')
+@token_required
+@permission_required('read_team')
 def inchargeProfile(id):
     try:
         incharge=Employee.query.get(id)
@@ -168,6 +175,8 @@ def inchargeProfile(id):
         })    
     
 @incharge.route('/update-incharge/<int:id>',methods=['PUT'])
+@token_required
+@permission_required('edit_team')
 def updateIncharge(id):
     try:
         data=request.get_json()
@@ -198,6 +207,8 @@ def updateIncharge(id):
         })
 
 @incharge.route('/delete-incharge/<int:id>',methods=['DELETE'])
+@token_required
+@permission_required('delete_team')
 def deleteIncharge(id):
     try:
         incharge=Employee.query.get(id)

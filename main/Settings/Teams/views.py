@@ -11,8 +11,8 @@ def addAddress():
         data = request.get_json()
         city=data.get("city")
         cities=[]
-        data=Address.query.all()
-        for i in data:
+        datas=Address.query.all()
+        for i in datas:
             c=i.city
             cities.append(c)
         if city in cities:

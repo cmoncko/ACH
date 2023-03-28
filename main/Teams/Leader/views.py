@@ -1,10 +1,17 @@
 from flask import Blueprint,request,jsonify
+from main.utils import token_required, permission_required
 from main.Teams.Members.models import MemberProfile
+from main.Services.Loan.Business.models import BusinessLoans
+from main.Services.Loan.Educational.models import EducationLoans
+from main.Services.Loan.Savings.models import SavingsLoans
+from main.Services.Pension.models import Pension
 from main.extensions import db
 
 leader=Blueprint('leader',__name__,url_prefix='/leader')
 
 @leader.route('/new-leader',methods=['POST'])
+@token_required
+@permission_required('edit_team')
 def newIncharge():
     try:
         data=request.get_json()
@@ -82,6 +89,8 @@ def newIncharge():
         })
 
 @leader.route('/show-leaders')
+@token_required
+@permission_required('read_team')
 def showIncharges():
     try:
         search=request.args['search']
@@ -119,6 +128,8 @@ def showIncharges():
         })    
     
 @leader.route('/leader-profile/<int:id>')
+@token_required
+@permission_required('read_team')
 def leaderProfile(id):
     try:
         leader=MemberProfile.query.get(id)
@@ -137,6 +148,8 @@ def leaderProfile(id):
         })
     
 @leader.route('/update-leader/<int:id>',methods=['PUT'])
+@token_required
+@permission_required('edit_team')
 def updateLeader(id):
     try:
         data=request.get_json()
@@ -178,6 +191,8 @@ def updateLeader(id):
         })
 
 @leader.route('/delete-leader/<int:id>',methods=['DELETE'])
+@token_required
+@permission_required('delete_team')
 def deleteLeader(id):
     try:
         leader=MemberProfile.query.get(id)
@@ -188,6 +203,30 @@ def deleteLeader(id):
         if leader.is_leader!=1:
             return jsonify({
                 "message":"This is not leader"
+            })
+        SL_loan_active=False
+        BL_loan_active=False
+        EL_loan_active=False
+        pension_active=False
+        pension=Pension.query.filter(Pension.member_id==id)
+        SL_loan=SavingsLoans.query.filter(SavingsLoans.member_id==id)
+        BL_loan=BusinessLoans.query.filter(BusinessLoans.member_id==id)
+        EL_loan=EducationLoans.query.filter(EducationLoans.member_id==id)
+        for i in SL_loan:
+            if i.status==1:
+                SL_loan_active=True
+        for i in BL_loan:
+            if i.status==1:
+                BL_loan_active=True
+        for i in EL_loan:
+            if i.status==1:
+                EL_loan_active=True
+        for i in pension:
+            if i.status==1:
+                pension_active=True
+        if EL_loan_active or BL_loan_active or SL_loan_active or pension_active:
+            return jsonify({
+                    "message":"can't delete leader, loan(or)pension is active."
             })
         db.session.delete(leader)
         db.session.commit()

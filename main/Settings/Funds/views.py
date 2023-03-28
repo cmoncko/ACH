@@ -23,7 +23,23 @@ def addAmount():
         return jsonify({
             "error":str(e)
         })
-
+    
+@settingsfunds.route("/update-santha-amount/<int:id>",methods=["POST"])
+def updateAmount(id):
+    try:
+        entry=MasterData.query.get(id)
+        data=request.get_json()
+        entry.value=data.get("value")
+        db.session.commit()
+        return jsonify({
+            "id":entry.id,
+            "property":entry.property,
+            "value":entry.value
+        })
+    except Exception as e:
+        return jsonify({
+            "error":str(e)
+        })
 
 @settingsfunds.route("/add-santhayear",methods=["POST"])
 def santhaYear():

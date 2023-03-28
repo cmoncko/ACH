@@ -76,8 +76,27 @@ class Employee(db.Model):
                 "state":self.state,
                 "district":self.district,
                 "address":self.address,
-                # "leaving_date":self.leaving_date,
+                "relieving_date":self.relieving_date,
                 "image_path":self.image_path,
                 "aadhar_number":self.aadhar,
                 "mobile_no":self.mobile,
+                }
+    def emp_export(self):
+        return {"name":self.name,
+                "id":self.id,
+                "employee_type":self.employee_type,
+                "DOB":self.dob,
+                "gender":self.gender,
+                "city":self.city,
+                "state":self.state,
+                "district":self.district,
+                "address":self.address,
+                "pincode":self.pincode,
+                "status":self.status,
+                "join_date":self.join_date,
+                "salary":self.salary,
+                "relieving_date":self.relieving_date,
+                "image_path":self.image_path,
+                "aadhar_number":self.aadhar,
+                "mobile_no":self.mobile
                 }

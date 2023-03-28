@@ -1,10 +1,17 @@
 from flask import Blueprint,request,jsonify
+from main.utils import token_required,permission_required
 from main.extensions import db
 from main.Teams.Members.models import MemberProfile
+from main.Services.Loan.Business.models import BusinessLoans
+from main.Services.Loan.Educational.models import EducationLoans
+from main.Services.Loan.Savings.models import SavingsLoans
+from main.Services.Pension.models import Pension
 
 member=Blueprint('member',__name__,url_prefix='/member')
 
 @member.route('/add-member',methods=['POST'])
+@token_required
+@permission_required('edit_team')
 def AddMembers():
     try:
         data=request.get_json()
@@ -80,6 +87,8 @@ def AddMembers():
         })
     
 @member.route('/show-members')
+@token_required
+@permission_required('read_team')
 def showMembers():
     try:
         search=request.args['search']
@@ -108,6 +117,8 @@ def showMembers():
         })
     
 @member.route('/member-profile/<int:id>')
+@token_required
+@permission_required('read_team')
 def memProfile(id):
     try:
         member=MemberProfile.query.get(id)
@@ -115,17 +126,19 @@ def memProfile(id):
                 return jsonify({
                     "message":"member not exist."
                 })
-        if member.is_leader!=1:
+        if member.is_leader!=0:
             return jsonify({
                 "message":"This is not member"
             })
         return jsonify(MemberProfile.profile(member))
     except Exception as e:
-        return jsonify({
-            "erroe":str(e)
+         return jsonify({
+             "error":str(e)
         })
     
 @member.route('/update-member/<int:id>',methods=['PUT'])
+@token_required
+@permission_required('edit_team')
 def updateMembers(id):
     try:
         data=request.get_json()
@@ -167,6 +180,8 @@ def updateMembers(id):
         })
     
 @member.route('/delete-member/<int:id>',methods=['DELETE'])
+@token_required
+@permission_required('delete_team')
 def deletemember(id):
     try:
         member=MemberProfile.query.get(id)
@@ -177,6 +192,32 @@ def deletemember(id):
         if member.is_leader!=0:
             return jsonify({
                 "message":"This is not member"
+            })
+        SL_loan_active=False
+        BL_loan_active=False
+        EL_loan_active=False
+        pension_active=False
+        pension=Pension.query.filter(Pension.member_id==id)
+        # SL_loan=SavingsLoans.query.filter(SavingsLoans.member_id==id)
+        SL_loan=SavingsLoans.query.filter((SavingsLoans.member_id==id)&(SavingsLoans.status==1)).count()
+        print(SL_loan)
+        BL_loan=BusinessLoans.query.filter(BusinessLoans.member_id==id)
+        EL_loan=EducationLoans.query.filter(EducationLoans.member_id==id)
+        for i in SL_loan:
+            if i.status==1:
+                SL_loan_active=True
+        for i in BL_loan:
+            if i.status==1:
+                BL_loan_active=True
+        for i in EL_loan:
+            if i.status==1:
+                EL_loan_active=True
+        for i in pension:
+            if i.status==1:
+                pension_active=True
+        if EL_loan_active or BL_loan_active or SL_loan_active or pension_active:
+            return jsonify({
+                    "message":"can't delete member, loan(or)pension is active."
             })
         db.session.delete(member)
         db.session.commit()

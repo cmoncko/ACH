@@ -1,9 +1,9 @@
-from flask import Flask
-from .extenstions import db
+from .extensions import Flask,db
 
 app=Flask(__name__,instance_relative_config=True)
 app.config.from_prefixed_env()
 
+app.config['SECRET_KEY']='cmoncko'
 app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:password@localhost:3306/ACH'
 app.config['SQLALCHEMY_TRACK_MODIFICATION']=True
 
@@ -36,24 +36,20 @@ app.register_blueprint(savings)
 from main.Services.Requests.models import *
 from main.Services.Benefits.models import *
 from main.Services.Pension.models import *
+from main.Services.Loan.Savings.models import *
+from main.Services.Loan.Business.models import *
+from main.Services.Loan.Educational.models import *
 
 from main.Services.Requests.views import requests
-from main.Services.Benefits.views import benefit
+from main.Services.Benefits.views import benefits
 from main.Services.Pension.views import pension
-
-app.register_blueprint(requests)
-app.register_blueprint(benefit)
-app.register_blueprint(pension)
-
-#Loan
-from main.Services.Loan.Savings.models import *
-from main.Services.Loan.Educational.models import *
-from main.Services.Loan.Business.models import*
-
 from main.Services.Loan.Savings.views import savings_loan
 from main.Services.Loan.Business.views import business_loan
 from main.Services.Loan.Educational.views import educational_loan
 
+app.register_blueprint(requests)
+app.register_blueprint(benefits)
+app.register_blueprint(pension)
 app.register_blueprint(savings_loan)
 app.register_blueprint(business_loan)
 app.register_blueprint(educational_loan)
@@ -77,19 +73,42 @@ app.register_blueprint(withdraw)
 from main.Settings.Services.models import *
 from main.Settings.Accounts.models import *
 from main.Settings.Funds.models import *
-from main.Settings.Teams.models import *
 from main.Settings.Admin.models import *
 from main.Settings.Loans.models import *
+from main.Settings.Teams.models import *
 
 from main.Settings.Services.views import settingServices
 from main.Settings.Accounts.views import settings_accounts
+from main.Settings.Admin.views import admin
 from main.Settings.Teams.views import settingsTeams
-from main.Settings.Funds.views import settingsfunds
 from main.Settings.Loans.views import settings_loans
 
+app.register_blueprint(admin)
 app.register_blueprint(settingServices)
 app.register_blueprint(settings_accounts)
 app.register_blueprint(settingsTeams)
-app.register_blueprint(settingsfunds)
 app.register_blueprint(settings_loans)
 
+#Drop Down
+from main.DropDown.views import drop_down
+
+app.register_blueprint(drop_down)
+
+#Auth
+from main.Authentication.Auth import auth
+
+app.register_blueprint(auth)
+
+#Records
+
+from main.Records.Export import export
+from main.Records.Import import import_csv
+
+app.register_blueprint(export)
+app.register_blueprint(import_csv)
+
+#Report
+
+from main.Report.MonthlyCollection.views import collection
+
+app.register_blueprint(collection)
