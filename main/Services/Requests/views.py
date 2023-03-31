@@ -9,6 +9,7 @@ from main.Services.Loan.Educational.models import EducationLoans
 from main.extensions import db
 from datetime import datetime
 import uuid
+from main.Services.AccountClosing.models import AccountClosing
 
 requests=Blueprint('request',__name__,url_prefix='/request')
 
@@ -54,6 +55,7 @@ def sendRequest():
                           comments=comments,
                           request_loan_type=request_loan_type,
                           benefit_type_id=benefit_type_id,)
+            
         if request_loan_type==4:
             pension_monthly_amount=data.get('pension_monthly_amount')
             entry=LoanRequest(requested_by=requested_by,
@@ -61,6 +63,12 @@ def sendRequest():
                           comments=comments,
                           request_loan_type=request_loan_type,
                           pension_monthly_amount=pension_monthly_amount)
+            
+        if request_loan_type==5:
+            entry=LoanRequest(requested_by=requested_by,
+                          appied_on=appied_on,
+                          comments=comments,
+                          request_loan_type=request_loan_type)
 
         
         db.session.add(entry)
@@ -331,6 +339,14 @@ def approve(id):
                               ref_no=uuid.uuid4().hex[:8],
                               approval_no=loan_request.id)
                 db.session.add(entry)
+
+            #Account Closing
+            elif loan_request.request_loan_type==5:
+                entry=AccountClosing(member_id=loan_request.requested_by,
+                                     reference_no=uuid.uuid4().hex[:8],
+                                     request_id=loan_request.id)
+                
+
 
             db.session.commit()
             return jsonify({
