@@ -4,16 +4,24 @@ from main.Services.Loan.Business.models import BusinessLoanPayment
 from main.Services.Loan.Savings.models import SavingsLoansPayment
 from main.Services.Loan.Educational.models import EducationalLoanPayment
 from main.extensions import db
+from main.utils import token_required,permission_required,loger
+warning="warning"
+info="info"
+error="error"
 
 collection=Blueprint("collection",__name__,url_prefix="/collection")
 
 @collection.route('/savings-loan-monthly')
 def SavingsMonthlyCollection():
     try:
+        page=request.args['page']
+        per_page=request.args['per_page']
         data=[]
         month=datetime.now().month
-        sL_col=SavingsLoansPayment.query.filter_by(status=1).all()
+        sL_col=SavingsLoansPayment.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
         for detail in sL_col:
+            if detail.status!=1:
+                continue
             paid_month=detail.paid_date.month
             if paid_month==month:
                 id=detail.id
@@ -29,19 +37,26 @@ def SavingsMonthlyCollection():
                     "paid_date":paid_date,
                     "status":status}
                 data.append(info)
-        if len(data)<1:
-            return jsonify({"status": False, "data": "", "msg": "No payments There", "error": ""}), 200
-        return jsonify({"status": True, "data":data, "msg": "", "error": ""}), 201
+        if not data:
+             loger("warning").warning("no data returned")
+             return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+        loger("info").info("santha details viewed.")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({"status": False, "data": "", "msg": "", "error": str(e)}), 500
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @collection.route('/business-loan-monthly')
 def BusinessMonthlyCollection():
     try:
+        page=request.args['page']
+        per_page=request.args['per_page']
         data=[]
         month=datetime.now().month
-        BL_col=BusinessLoanPayment.query.filter_by(status=1).all()
+        BL_col=BusinessLoanPayment.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
         for detail in BL_col:
+            if detail.status!=1:
+                continue
             paid_month=detail.paid_date.month
             if paid_month==month:
                 id=detail.id
@@ -57,19 +72,26 @@ def BusinessMonthlyCollection():
                     "paid_date":paid_date,
                     "status":status}
                 data.append(info)
-        if len(data)<1:
-            return jsonify({"status": False, "data": "", "msg": "No payments There", "error": ""}), 200
-        return jsonify({"status": True, "data":data, "msg": "successfully logged-in", "error": ""}), 201
+        if not data:
+             loger("warning").warning("no data returned")
+             return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+        loger("info").info("santha details viewed.")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({"status": False, "data": "", "msg": "", "error": str(e)}), 500
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @collection.route('/educational-loan-monthly')
 def EducationMonthlyCollection():
     try:
+        page=request.args['page']
+        per_page=request.args['per_page']
         data=[]
         month=datetime.now().month
-        EL_col=EducationalLoanPayment.query.filter_by(status=1).all()
+        EL_col=EducationalLoanPayment.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
         for detail in EL_col:
+            if detail.status!=1:
+                continue
             paid_month=detail.paid_date.month
             if paid_month==month:
                 id=detail.id
@@ -85,8 +107,11 @@ def EducationMonthlyCollection():
                     "paid_date":paid_date,
                     "status":status}
                 data.append(info)
-        if len(data)<1:
-            return jsonify({"status": False, "data": "", "msg": "No payments There", "error": ""}), 200
-        return jsonify({"status": True, "data":data, "msg": "successfully logged-in", "error": ""}), 201
+        if not data:
+             loger("warning").warning("no data returned")
+             return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+        loger("info").info("santha details viewed.")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({"status": False, "data": "", "msg": "", "error": str(e)}), 500
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

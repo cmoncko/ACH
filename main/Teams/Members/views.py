@@ -1,5 +1,5 @@
 from flask import Blueprint,request,jsonify
-from main.utils import token_required,permission_required
+from main.utils import token_required,permission_required,loger
 from main.extensions import db
 from main.Teams.Members.models import MemberProfile
 from main.Services.Loan.Business.models import BusinessLoans
@@ -16,37 +16,81 @@ def AddMembers():
     try:
         data=request.get_json()
         user_id=data.get('user_id')
-        members=MemberProfile.query.filter(MemberProfile.user_id==user_id)
-        memberExist=False
-        for member in members:
-            memberExist=True
-        if memberExist:
-            return jsonify({
-                "message":"userid already exist."
-            })
+        if not user_id:
+            loger('warning').warning("userid must entered.")
+            return jsonify({"status":False,"data":"","message":"userid must entered.","error":""}),200
+        if members != None:
+            loger('warning').warning("userid already exist.")
+            return jsonify({"status":False,"data":"","message":"userid already exist.","error":""}),200
+        members=MemberProfile.query.filter(MemberProfile.user_id==user_id).first()
+        if members != None:
+            loger('warning').warning("userid already exist.")
+            return jsonify({"status":False,"data":"","message":"userid already exist.","error":""}),200
         name=data.get('name')
+        if not name:
+            loger('warning').warning("name must entered.")
+            return jsonify({"status":False,"data":"","message":"name must entered.","error":""}),200
         DOB=data.get('DOB')
+        if not DOB:
+            loger('warning').warning("DOB must entered.")
+            return jsonify({"status":False,"data":"","message":"DOB must entered.","error":""}),200
         image_path=data.get('image_path')
         gender=data.get('gender')
         address=data.get('address')
+        if not address:
+            loger('warning').warning("address must entered.")
+            return jsonify({"status":False,"data":"","message":"address must entered.","error":""}),200
         city=data.get('city')
+        if not city:
+            loger('warning').warning("city must entered.")
+            return jsonify({"status":False,"data":"","message":"city must entered.","error":""}),200
         district=data.get('district')
+        if not district:
+            loger('warning').warning("district must entered.")
+            return jsonify({"status":False,"data":"","message":"district must entered.","error":""}),200
         state=data.get('state')
+        if not state:
+            loger('warning').warning("state must entered.")
+            return jsonify({"status":False,"data":"","message":"state must entered.","error":""}),200
         pincode=data.get('pincode')
+        if not pincode:
+            loger('warning').warning("pincode must entered.")
+            return jsonify({"status":False,"data":"","message":"pincode must entered.","error":""}),200
         auth_type_id=data.get('auth_type_id')
         auth_data=data.get('auth_data')
+        if not auth_data:
+            loger('warning').warning("auth data must entered.")
+            return jsonify({"status":False,"data":"","message":"auth data must entered.","error":""}),200
         auth_path=data.get('auth_path')
         mobile_no=data.get('mobile_no')
+        if not mobile_no:
+            loger('warning').warning("mobile no must entered.")
+            return jsonify({"status":False,"data":"","message":"mobile no must entered.","error":""}),200
         join_date=data.get('join_date')
+        if not join_date:
+            loger('warning').warning("join date must entered.")
+            return jsonify({"status":False,"data":"","message":"join date must entered.","error":""}),200
         is_leader=0
         leader_id=data.get('leader_id')
+        if not leader_id:
+            loger('warning').warning("leader id must entered.")
+            return jsonify({"status":False,"data":"","message":"leader id must entered.","error":""}),200
         incharge_id=data.get('incharge_id')
+        if not incharge_id:
+            loger('warning').warning("incharge id must entered.")
+            return jsonify({"status":False,"data":"","message":"incharge id must entered.","error":""}),200
         status=data.get('status')
         last_status_change_date=data.get('last_status_change_date')
         comments=data.get('comments')
         nominee_name=data.get('nominee_name')
+        if not nominee_name:
+            loger('warning').warning("nominee name must entered.")
+            return jsonify({"status":False,"data":"","message":"nominee name must entered.","error":""}),200
         nominee_DOB=data.get('nominee_BOB')
         nominee_relation=data.get('nominee_relation')
+        if not nominee_relation:
+            loger('warning').warning("nominee relation must entered.")
+            return jsonify({"status":False,"data":"","message":"nominee relation must entered.","error":""}),200
         nominee_mobileno=data.get('nominee_mobileno')
         nominee_adhaarno=data.get('nominee_adhaarno')
         member=MemberProfile(user_id=user_id,
@@ -78,13 +122,11 @@ def AddMembers():
 
         db.session.add(member)
         db.session.commit()
-        return jsonify({
-        "msg":"one member added successfully"
-        })
+        loger("info").info("one member added successfully,")
+        return jsonify({"status":True,"data":MemberProfile.to_json(member),"msg":"one member added successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-        "msg":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @member.route('/show-members')
 @token_required
@@ -99,22 +141,25 @@ def showMembers():
             member=MemberProfile.query.filter((MemberProfile.name.contains(search)) | 
                                               (MemberProfile.mobile_no.contains(search)) |  
                                               (MemberProfile.id.contains(search)))
-            return jsonify({
-                "data": [MemberProfile.to_json(i) for i in member],
-                "total_members": all_members.total
-            })
+            data=[MemberProfile.to_json(i) for i in member]
+            if not data:
+                loger('warning').warning("no data returned.")
+                return jsonify({"status":False,"data":"","message":"no data returned.","error":""}),200
+            loger("info").info("member(s) viewed.")
+            return jsonify({"status":True,"data": data,"total_members": all_members.total,"error":""}),201
 
         else:
             members=MemberProfile.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
-            return jsonify({
-                "data":[MemberProfile.to_json(member) for member in members.items],
-                "total_members": all_members.total
-            })
+            data=[MemberProfile.to_json(member) for member in members.items]
+            if not data:
+                loger('warning').warning("no data returned.")
+                return jsonify({"status":False,"data":"","message":"no data returned.","error":""}),200
+            loger("info").info("member(s) viewed.")
+            return jsonify({"status":True,"data": data,"total_members": all_members.total,"error":""}),201
         
     except Exception as e:
-        return jsonify({
-            "msg": str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @member.route('/member-profile/<int:id>')
 @token_required
@@ -123,18 +168,15 @@ def memProfile(id):
     try:
         member=MemberProfile.query.get(id)
         if not member:
-                return jsonify({
-                    "message":"member not exist."
-                })
+                loger('warning').warning("member not exist.")
+                return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         if member.is_leader!=0:
-            return jsonify({
-                "message":"This is not member"
-            })
+            loger('warning').warning("This is not member.")            
+            return jsonify({"status":False,"message":"This is not member","error":""}),200
         return jsonify(MemberProfile.profile(member))
     except Exception as e:
-         return jsonify({
-             "error":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @member.route('/update-member/<int:id>',methods=['PUT'])
 @token_required
@@ -144,13 +186,11 @@ def updateMembers(id):
         data=request.get_json()
         member=MemberProfile.query.get(id)
         if not member:
-                return jsonify({
-                    "message":"member not exist."
-                })
-        if member.is_leader!=1:
-            return jsonify({
-                "message":"This is not member"
-            })
+                loger('warning').warning("member not exist.")
+                return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
+        if member.is_leader!=0:
+            loger('warning').warning("This is not member.")            
+            return jsonify({"status":False,"message":"This is not member","error":""}),200
         member.name=data.get('name')
         member.DOB=data.get('DOB')
         member.gender=data.get('gender')
@@ -171,13 +211,11 @@ def updateMembers(id):
         member.nominee_mobileno=data.get('nominee_mobileno')
         member.nominee_adhaarno=data.get('nominee_adhaarno')
         db.session.commit()
-        return jsonify({
-        "msg":"member updated successfully"
-        })
+        loger("info").info("member updated successfully,")
+        return jsonify({"status":True,"data":MemberProfile.to_json(member),"msg":"member updated successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-        "msg":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @member.route('/delete-member/<int:id>',methods=['DELETE'])
 @token_required
@@ -186,13 +224,11 @@ def deletemember(id):
     try:
         member=MemberProfile.query.get(id)
         if not member:
-                return jsonify({
-                    "message":"member not exist."
-                })
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         if member.is_leader!=0:
-            return jsonify({
-                "message":"This is not member"
-            })
+            loger('warning').warning("This is not member.")            
+            return jsonify({"status":False,"message":"This is not member","error":""}),200
         SL_loan_active=False
         BL_loan_active=False
         EL_loan_active=False
@@ -216,15 +252,12 @@ def deletemember(id):
             if i.status==1:
                 pension_active=True
         if EL_loan_active or BL_loan_active or SL_loan_active or pension_active:
-            return jsonify({
-                    "message":"can't delete member, loan(or)pension is active."
-            })
+            loger('warning').warning("can't delete member, loan(or)pension is active.")            
+            return jsonify({"status":False,"message":"can't delete member, loan(or)pension is active.","error":""}),200
         db.session.delete(member)
         db.session.commit()
-        return jsonify({
-            "message":"member deleted successfully."
-        })
+        loger("info").info("member deleted successfully,")
+        return jsonify({"status":True,"data":MemberProfile.to_json(member),"msg":"member deleted successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

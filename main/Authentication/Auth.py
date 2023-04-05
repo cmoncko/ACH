@@ -6,6 +6,7 @@ from datetime import datetime,timedelta
 from werkzeug.security import check_password_hash,generate_password_hash
 # from TMS_Api.Utils import sendEmailOtp, verifyOtp,token_generate,technical_log,error_log
 from main.extensions import db
+from main.utils import loger
 
 auth = Blueprint("Auth", __name__, url_prefix="/Auth")
 
@@ -19,15 +20,13 @@ def loginAuthData():
             "password": json_data.get("password")
         }
         authData = AppUser.query.filter_by(email=loginData.get("email")).first()
-        # email=db.session.execute(text(""))
 
         if authData is None:
-            # technical_log().warning({"status": False, "data": "", "msg": "Invalid user credential!!!"})
+            loger(level="warning").warning("Invalid user credential!!!")
             return jsonify({"status": False, "data": "", "msg": "Invalid user credential!!!", "error": ""}),200
         if not check_password_hash(authData.encrypted_password, loginData.get("password")):
-            # technical_log().warning({"status": False, "data": "", "msg": "Invalid password!!!"})
+            loger(level="warning").warning("Invalid password!!!")
             return jsonify({"status": False, "data": "", "msg": "Invalid password!!!", "error": ""}), 200
-
         token=jwt.encode({
                     "id":authData.id,
                     "exp":datetime.utcnow()+timedelta(hours=10)
@@ -39,10 +38,10 @@ def loginAuthData():
                 "mobileNo": authData.mobile,
                 "username": authData.user_name
             }
-        # technical_log().info({"status": True, "token": token, "msg": "successfully logged-in"}) 
+        loger(level="info").info("successfully logged-in") 
         return jsonify({"status": True, "token":token, "msg": "successfully logged-in", "error": ""}), 201
     except Exception as e:
-        # error_log().error({"status": False, "data": "", "msg": "", "error": str(e)})
+        loger(level="error").error(str(e))
         return jsonify({"status": False, "data": "", "msg": "", "error": str(e)}), 500
 
 
@@ -50,13 +49,13 @@ def loginAuthData():
 def logoutAuthData():
     try:
         if session.get("loginData") is None or session.get("loginData") == "":
-#            technical_log().warning({"status": True, "data": "", "msg": "you already logged-out"})
-            return jsonify({"status": True, "data": "", "msg": "you already logged-out", "error": ""}), 200
+            loger(level="warning").warning("you already logged-out")
+            return jsonify({"status": False, "data": "", "msg": "you already logged-out", "error": ""}), 200
         session.pop("loginData")
-#         technical_log().info({"status": True, "data": "", "msg": "successfully logged-out"})
-        return jsonify({"status": True, "data": "", "msg": "successfully logged-out", "error": ""}), 200
+        loger(level="info").info("successfully logged-out")
+        return jsonify({"status": True, "data": "", "msg": "successfully logged-out", "error": ""}), 201
     except Exception as e:
-        # error_log().error({"status": False, "data": "", "msg": "", "error": str(e)})
+        loger(level="error").error(str(e))
         return jsonify({"status": False, "data": "", "msg": "", "error": str(e)}), 500
 
 

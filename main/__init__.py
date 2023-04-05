@@ -1,4 +1,4 @@
-from .extensions import Flask,db
+from .extensions import Flask,db,datetime,scheduler
 
 app=Flask(__name__,instance_relative_config=True)
 app.config.from_prefixed_env()
@@ -39,6 +39,7 @@ from main.Services.Pension.models import *
 from main.Services.Loan.Savings.models import *
 from main.Services.Loan.Business.models import *
 from main.Services.Loan.Educational.models import *
+from main.Services.AccountClosing.models import *
 
 from main.Services.Requests.views import requests
 from main.Services.Benefits.views import benefits
@@ -46,6 +47,7 @@ from main.Services.Pension.views import pension
 from main.Services.Loan.Savings.views import savings_loan
 from main.Services.Loan.Business.views import business_loan
 from main.Services.Loan.Educational.views import educational_loan
+from main.Services.AccountClosing.views import account_closing
 
 app.register_blueprint(requests)
 app.register_blueprint(benefits)
@@ -53,6 +55,7 @@ app.register_blueprint(pension)
 app.register_blueprint(savings_loan)
 app.register_blueprint(business_loan)
 app.register_blueprint(educational_loan)
+app.register_blueprint(account_closing)
 
 #Accounts
 from main.Accounts.Deposit.models import *
@@ -79,20 +82,24 @@ from main.Settings.Teams.models import *
 
 from main.Settings.Services.views import settingServices
 from main.Settings.Accounts.views import settings_accounts
+from main.Settings.Funds.views import settingsfunds
 from main.Settings.Admin.views import admin
 from main.Settings.Teams.views import settingsTeams
 from main.Settings.Loans.views import settings_loans
 
 app.register_blueprint(admin)
+app.register_blueprint(settingsfunds)
 app.register_blueprint(settingServices)
 app.register_blueprint(settings_accounts)
 app.register_blueprint(settingsTeams)
 app.register_blueprint(settings_loans)
 
-#Drop Down
+#Drop Down & Dashboard
 from main.DropDown.views import drop_down
-
+from main.Dashboard.views import dashboard
+ 
 app.register_blueprint(drop_down)
+app.register_blueprint(dashboard)
 
 #Auth
 from main.Authentication.Auth import auth
@@ -112,3 +119,15 @@ app.register_blueprint(import_csv)
 from main.Report.MonthlyCollection.views import collection
 
 app.register_blueprint(collection)
+
+#Schedule job
+
+# app.config['SCHEDULER_API_ENABLED']=True
+# app.config['JOBS'] = [{'id': 'job1',
+#                        'func': add_BL_penalty,
+#                        'trigger': 'cron',
+#                        'day': '1',
+#                        'hour': '23',
+#                        'minute': '5'}]
+# scheduler.init_app(app)
+# scheduler.start()

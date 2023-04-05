@@ -3,6 +3,10 @@ from main.extensions import db
 from datetime import datetime
 from main.Teams.Members.models import MemberProfile
 from main.Funds.Savings.models import Savings
+from main.utils import token_required,permission_required,loger
+warning="warning"
+info="info"
+error="error"
 
 savings=Blueprint('savings',__name__,url_prefix="/savings")
 
@@ -11,8 +15,21 @@ def savingsPayment():
     try:
         data=request.get_json()
         member_id=data.get('member_id')
+        if not member_id:
+            loger('warning').warning("member_id must entered.")
+            return jsonify({"status":False,"data":"","message":"requested_by must entered.","error":""}),200
+        member=MemberProfile.query.filter(MemberProfile.id==member_id).first()
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         transaction_amount=data.get('transaction_amount')
+        if not transaction_amount:
+            loger('warning').warning("transaction_amount must entered.")
+            return jsonify({"status":False,"data":"","message":"transaction_amount must entered.","error":""}),200
         transaction_date=data.get('transaction_date')
+        if not transaction_date:
+            loger('warning').warning("transaction_date must entered.")
+            return jsonify({"status":False,"data":"","message":"transaction_date must entered.","error":""}),200
         trans_date_list=str(transaction_date).split('-')
         date_now=datetime(int(trans_date_list[0]),int(trans_date_list[1]),int(trans_date_list[2]))
         year=date_now.strftime("%Y")
@@ -26,87 +43,91 @@ def savingsPayment():
             final=fbalance.final_balance
         
         final_balance+=final
-
-        member=[MemberProfile.to_json(i) for i in MemberProfile.query.filter(MemberProfile.id==member_id)]
-
-        if len(member)<1:
-            return jsonify({
-                "message":"Member is not exist"
-            })
-        else:
-            entry=Savings(member_id=member_id,
-                          transaction_amount=transaction_amount,
-                          transaction_date=transaction_date,
-                          year=year,
-                          month=month,
-                          week=week,
-                          transaction_type=transaction_type,
-                          final_balance=final_balance)
-            db.session.add(entry)
-            db.session.commit()
-
-            return jsonify({
-                "message":"payment detail added successfully."
-            })
-    
+        entry=Savings(member_id=member_id,
+                      transaction_amount=transaction_amount,
+                      transaction_date=transaction_date,
+                      year=year,
+                      month=month,
+                      week=week,
+                      transaction_type=transaction_type,
+                      final_balance=final_balance)
+        db.session.add(entry)
+        db.session.commit()
+        data=[{"member_id":member_id,
+               "id":entry.id,
+               "transaction_amount":transaction_amount,
+               "transaction_datet":transaction_date,
+               "year":year,
+               "month":entry.month,
+               "week":entry.week,
+               "transaction_type":transaction_type,
+               "final_balance":entry.final_balance}]
+        loger("info").info("saving payment details added successfully,")
+        return jsonify({"status":True,"data":data,"msg":"saving payment details added successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @savings.route('/withdraw',methods=['POST'])
 def withdraw():
     try:
         data=request.get_json()
         member_id=data.get('member_id')
+        if not member_id:
+            loger('warning').warning("member_id must entered.")
+            return jsonify({"status":False,"data":"","message":"requested_by must entered.","error":""}),200
+        member=MemberProfile.query.filter(MemberProfile.id==member_id).first()
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         transaction_amount=data.get('transaction_amount')
+        if not transaction_amount:
+            loger('warning').warning("transaction_amount must entered.")
+            return jsonify({"status":False,"data":"","message":"transaction_amount must entered.","error":""}),200
         transaction_date=data.get('transaction_date')
+        if not transaction_date:
+            loger('warning').warning("transaction_date must entered.")
+            return jsonify({"status":False,"data":"","message":"transaction_date must entered.","error":""}),200
         trans_date_list=str(transaction_date).split('-')
         date_now=datetime(int(trans_date_list[0]),int(trans_date_list[1]),int(trans_date_list[2]))
         year=date_now.strftime("%Y")
         month=date_now.strftime("%m")
         week=date_now.strftime("%V")
-        transaction_type=1
-        
-        member=[MemberProfile.to_json(i) for i in MemberProfile.query.filter(MemberProfile.id==member_id)]
-
-        if len(member)<1:
-            return jsonify({
-                "message":"Member is not exist"
-            })
-        else:        
-            fbalances=Savings.query.filter(Savings.member_id==member_id)
-            final_balance=0
-            for fbalance in fbalances:
-                final=fbalance.final_balance
-            if final>transaction_amount:
-                final_balance=final-transaction_amount
-                
-                entry=Savings(member_id=member_id,
-                          transaction_amount=transaction_amount,
-                          transaction_date=transaction_date,
-                          year=year,
-                          month=month,
-                          week=week,
-                          transaction_type=transaction_type,
-                          final_balance=final_balance)
-                db.session.add(entry)
-                db.session.commit()
-    
-                return jsonify({
-                    "message":"withdraw detail added successfully."
-                })
-            
-            else:
-                return jsonify({
-                    "message":"Insufficient fund!"
-                })
-    
+        transaction_type=0
+        final_balance=transaction_amount
+        fbalances=Savings.query.filter(Savings.member_id==member_id)
+        final_balance=0
+        final=0
+        for fbalance in fbalances:
+            final=fbalance.final_balance
+        if final<transaction_amount:
+            loger('warning').warning("Insufficient Fund.")
+            return jsonify({"status":False,"data":"","message":"Insufficient Fund.","error":""}),200
+        final_balance=final-transaction_amount
+        entry=Savings(member_id=member_id,
+                  transaction_amount=transaction_amount,
+                  transaction_date=transaction_date,
+                  year=year,
+                  month=month,
+                  week=week,
+                  transaction_type=transaction_type,
+                  final_balance=final_balance)
+        db.session.add(entry)
+        db.session.commit()
+        data=[{"member_id":member_id,
+               "id":entry.id,
+               "transaction_amount":transaction_amount,
+               "transaction_datet":transaction_date,
+               "year":year,
+               "month":entry.month,
+               "week":entry.week,
+               "transaction_type":transaction_type,
+               "final_balance":entry.final_balance}]
+        loger("info").info("saving withdraw detail added successfully,")
+        return jsonify({"status":True,"data":data,"msg":"saving withdraw detail added successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
-
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 @savings.route('/savings-details')
 def savingDetails():
     try:
@@ -162,9 +183,11 @@ def savingDetails():
                          "total_withdraw":total_withdraw,
                          "current_savings":current_savings}
                     data.append(info)
-            return jsonify({
-                    "data":data
-                })
+            if not data:
+                loger("warning").warning("no data returned")
+                return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+            loger("info").info("savings details viewed.")
+            return jsonify({"status":True,"data":data,"msg":"","error":""}),200
         else:
             mem_details=MemberProfile.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
             data=[]
@@ -216,28 +239,26 @@ def savingDetails():
                          "total_withdraw":total_withdraw,
                          "current_savings":current_savings}
                     data.append(info)
-            return jsonify({
-                    "data":data
-                })
+            if not data:
+                loger("warning").warning("no data returned")
+                return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+            loger("info").info("savings details viewed.")
+            return jsonify({"status":True,"data":data,"msg":"","error":""}),200
 
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
-
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 @savings.route('saving/<int:id>')
 def savingPayments(id):
     try:
         payments=Savings.query.filter((Savings.member_id==id) & (Savings.transaction_type==0))
-        member=MemberProfile.query.filter(MemberProfile.id==id)
-        memberExist=False
-        paymentExist=False
-        for mem in member:
-            memberExist=True
-            name=mem.name
+        member=MemberProfile.query.get(id)
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
+        name=member.name
         data=[]
         for payment in payments:
-            paymentExist=True
             pid=payment.id
             amount=payment.transaction_amount
             month=payment.month
@@ -251,42 +272,31 @@ def savingPayments(id):
                 "amount":amount,
                 "month":pmonth,
                 "week":week,
-                "received_on":received_on
-            }
+                "received_on":received_on}
             data.append(info)
-        if memberExist:
-            if paymentExist:
-                return jsonify({
-                    "name":name,
-                    "id":id,
-                    "data":data
-                })
-            else:
-                return jsonify({
-                    "message":"No payments exist!"
-                })
-        else:
-            return jsonify({
-                    "message":"Member Not Exist!"
-                })
+        information={
+                "name":name,
+                "id":id,
+                "data":data}
+        if not data:
+            loger("warning").warning("no data returned")
+            return jsonify({"status":False,"data":information,"msg":"","error":""}),200
+        loger("info").info("saving payment details viewed.")
+        return jsonify({"status":True,"data":information,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
-    
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 @savings.route('withdraw/<int:id>')
 def savingWithdraws(id):
     try:
         withdraws=Savings.query.filter((Savings.member_id==id) & (Savings.transaction_type==1))
-        member=MemberProfile.query.filter(MemberProfile.id==id)
-        memberExist=False
-        withdrawExist=False
-        for mem in member:
-            name=mem.name
-            memberExist=True
+        member=MemberProfile.query.get(id)
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
+        name=member.name
         data=[]
         for withdraw in withdraws:
-            withdrawExist=True
             pid=withdraw.id
             amount=withdraw.transaction_amount
             received_on=str(withdraw.transaction_date)
@@ -297,22 +307,15 @@ def savingWithdraws(id):
                 "received_on":received_on
             }
             data.append(info)
-        if memberExist:
-            if withdrawExist:
-                return jsonify({
-                    "name":name,
-                    "id":id,
-                    "data":data
-                })
-            else:
-                return jsonify({
-                    "message":"No withdraws exist!"
-                })
-        else:
-            return jsonify({
-                    "message":"Member Not Exist!"
-                })
+        information={
+                "name":name,
+                "id":id,
+                "data":data}
+        if not data:
+            loger("warning").warning("no data returned")
+            return jsonify({"status":False,"data":information,"msg":"","error":""}),200
+        loger("info").info("saving withdraw details viewed.")
+        return jsonify({"status":True,"data":information,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

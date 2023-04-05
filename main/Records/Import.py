@@ -18,7 +18,7 @@ import_csv=Blueprint("import",__name__,url_prefix='/import')
 def import_mamber_data():
     try:
         new_file=request.files.get('file')
-        f_format=new_file.filename
+        f_format=new_file.filename.split('.')[-1]
         if not new_file:
             return jsonify({"message":"csv file missing"})
         if f_format=='xlsx':    
@@ -28,6 +28,7 @@ def import_mamber_data():
             travel_df = pd.read_csv(new_file)
             cities = travel_df.to_dict('records')
         else:
+            print(f_format)
             return jsonify({"message":"file format can't support."})
         data=[]
         try:
@@ -242,6 +243,8 @@ def import_income():
                     category_id=None
                 else:
                     cat=MasterData.query.get(category_id)
+                    if not cat:
+                        return jsonify({"message":"category not exist."})
                     if cat.property!='category':
                         return jsonify({"message":"category not exist."})
                 total=GST+amount
@@ -303,7 +306,7 @@ def import_expense():
                 if pd.isnull(category_id):
                     return jsonify({"message category_id can't be empty."})
                 else:
-                    cat=MasterData.query.get(category_id)
+                    cat=CategorySubcategory.query.get(category_id)
                     if not cat:
                         return jsonify({"message":"category not exist."})
                 total=GST+amount

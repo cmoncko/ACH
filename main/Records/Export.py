@@ -1,5 +1,6 @@
 from main.Services.Loan.Business.models import BusinessLoans
 from main.extensions import *
+from main.utils import permission_required,token_required,loger
 from main.Teams.Members.models import MemberProfile
 from main.Teams.Incharge.models import  Employee
 from main.Funds.Santha.models import SanthaPayments
@@ -12,92 +13,107 @@ export=Blueprint('export',__name__,url_prefix='/export')
 
 @export.route("/export-member",methods=['POST','GET'])
 def Export_member():
-    member=MemberProfile.query.filter_by(is_leader=0).all()
-    name="export_member"
-    with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
-        fieldnames = ['id','user_id','name','dob','gender','address','city','state','leaving_date','district','pincode','auth_type_id','nominee_relation','auth_data','auth_type_id','mobile_no','join_date','is_leader','leader_id','incharge_id','nominee_dob','nominee_mobile_no','nominee_aadhar_no',"nominee_name"]
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        for i in member:
-            writer.writerow(
-                {'id':i.id,
-                'user_id':i.user_id,
-                'name':i.name,
-                'dob':i.DOB,
-                'gender':i.gender,
-                'address':i.address,
-                'city':i.city,
-                'state':i.state,
-                'district':i.district,
-                'pincode':i.pincode,
-                'auth_type_id':i.auth_type_id,
-                'auth_data':i.auth_data,
-                'auth_type_id':i.auth_type_id,
-                'mobile_no':i.mobile_no,
-                'join_date':i.join_date,
-                'leaving_date':i.leaving_date,
-                'is_leader':i.is_leader,
-                'leader_id':i.leader_id,
-                'incharge_id':i.incharge_id,
-                'nominee_dob':i.nominee_DOB,
-                'nominee_mobile_no':i.nominee_mobileno,
-                'nominee_name':i.nominee_name,
-                'nominee_relation':i.nominee_relation,
-                'nominee_aadhar_no':i.nominee_adhaarno})
-    file.close()        
-    path = f"excel_files/{name}.csv"
-    return send_file(path, as_attachment=True)
+    try:
+        member=MemberProfile.query.filter_by(is_leader=0).all()
+        name="export_member"
+        with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
+            fieldnames = ['id','user_id','name','dob','gender','address','city','state','leaving_date','district','pincode','auth_type_id','nominee_relation','auth_data','auth_type_id','mobile_no','join_date','is_leader','leader_id','incharge_id','nominee_dob','nominee_mobile_no','nominee_aadhar_no',"nominee_name"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i in member:
+                writer.writerow(
+                    {'id':i.id,
+                    'user_id':i.user_id,
+                    'name':i.name,
+                    'dob':i.DOB,
+                    'gender':i.gender,
+                    'address':i.address,
+                    'city':i.city,
+                    'state':i.state,
+                    'district':i.district,
+                    'pincode':i.pincode,
+                    'auth_type_id':i.auth_type_id,
+                    'auth_data':i.auth_data,
+                    'auth_type_id':i.auth_type_id,
+                    'mobile_no':i.mobile_no,
+                    'join_date':i.join_date,
+                    'leaving_date':i.leaving_date,
+                    'is_leader':i.is_leader,
+                    'leader_id':i.leader_id,
+                    'incharge_id':i.incharge_id,
+                    'nominee_dob':i.nominee_DOB,
+                    'nominee_mobile_no':i.nominee_mobileno,
+                    'nominee_name':i.nominee_name,
+                    'nominee_relation':i.nominee_relation,
+                    'nominee_aadhar_no':i.nominee_adhaarno})
+        file.close()        
+        path = f"excel_files/{name}.csv"
+        loger("info").info("member_exported ")
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)})
 
 @export.route("/export-leader",methods=['GET','POST'])
 def export_leader():
-    member=MemberProfile.query.filter_by(is_leader=1).all()
-    name="export_leader"
-    with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
-        fieldnames = ['id','user_id','name','dob','gender','address','city','state','district','leaving_date','pincode','auth_type_id','nominee_relation','auth_data','auth_type_id','mobile_no','join_date','is_leader','incharge_id','nominee_dob','nominee_mobile_no','nominee_aadhar_no',"nominee_name"]
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        for i in member:
-            writer.writerow(
-                {'id':i.id,
-                'user_id':i.user_id,
-                'name':i.name,
-                'dob':i.DOB,
-                'gender':i.gender,
-                'address':i.address,
-                'city':i.city,
-                'state':i.state,
-                'district':i.district,
-                'pincode':i.pincode,
-                'auth_type_id':i.auth_type_id,
-                'auth_data':i.auth_data,
-                'auth_type_id':i.auth_type_id,
-                'mobile_no':i.mobile_no,
-                'join_date':i.join_date,
-                'leaving_date':i.leaving_date,
-                'is_leader':i.is_leader,
-                'incharge_id':i.incharge_id,
-                'nominee_dob':i.nominee_DOB,
-                'nominee_mobile_no':i.nominee_mobileno,
-                'nominee_name':i.nominee_name,
-                'nominee_relation':i.nominee_relation,
-                'nominee_aadhar_no':i.nominee_adhaarno})
-    file.close()        
-    path = f"excel_files/{name}.csv"
-    return send_file(path, as_attachment=True)
+    try:
+        member=MemberProfile.query.filter_by(is_leader=1).all()
+        name="export_leader"
+        with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
+            fieldnames = ['id','user_id','name','dob','gender','address','city','state','district','leaving_date','pincode','auth_type_id','nominee_relation','auth_data','auth_type_id','mobile_no','join_date','is_leader','incharge_id','nominee_dob','nominee_mobile_no','nominee_aadhar_no',"nominee_name"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i in member:
+                writer.writerow(
+                    {'id':i.id,
+                    'user_id':i.user_id,
+                    'name':i.name,
+                    'dob':i.DOB,
+                    'gender':i.gender,
+                    'address':i.address,
+                    'city':i.city,
+                    'state':i.state,
+                    'district':i.district,
+                    'pincode':i.pincode,
+                    'auth_type_id':i.auth_type_id,
+                    'auth_data':i.auth_data,
+                    'auth_type_id':i.auth_type_id,
+                    'mobile_no':i.mobile_no,
+                    'join_date':i.join_date,
+                    'leaving_date':i.leaving_date,
+                    'is_leader':i.is_leader,
+                    'incharge_id':i.incharge_id,
+                    'nominee_dob':i.nominee_DOB,
+                    'nominee_mobile_no':i.nominee_mobileno,
+                    'nominee_name':i.nominee_name,
+                    'nominee_relation':i.nominee_relation,
+                    'nominee_aadhar_no':i.nominee_adhaarno})
+        file.close()        
+        path = f"excel_files/{name}.csv"
+        loger("info").info("leader exported ")
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+            loger("error").error(str(e))
+            return jsonify({"status":False,"data":"","msg":"","error":str(e)})
 
 @export.route("/export-incharge",methods=['GET','POST'])
 def export_employee():
-    member=Employee.query.filter_by(employee_type=0).all()
-    name="export_incharge"
-    with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
-        fieldnames = ["name","pincode","id","employee_type","DOB","gender","city","state","district","address","status","join_date","salary","relieving_date","image_path","aadhar_number","mobile_no"]
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        for i in member:
-            writer.writerow(Employee.emp_export(i))
-    file.close()        
-    path = f"excel_files/{name}.csv"
-    return send_file(path, as_attachment=True)
+    try:
+        member=Employee.query.filter_by(employee_type=0).all()
+        name="export_incharge"
+        with open(f'main/excel_files/{name}.csv', 'w', newline='') as file:
+            fieldnames = ["name","pincode","id","employee_type","DOB","gender","city","state","district","address","status","join_date","salary","relieving_date","image_path","aadhar_number","mobile_no"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i in member:
+                writer.writerow(Employee.emp_export(i))
+        file.close()        
+        path = f"excel_files/{name}.csv"
+        loger("info").info("incharge(s) exported ")
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)})
 
 @export.route('/export-santha',methods=['GET',"POST"])
 def export_santha():
@@ -181,9 +197,11 @@ def export_santha():
                 # })
         file.close()        
         path = f"excel_files/{name}.csv"
+        loger("info").info("santha exported ")
         return send_file(path, as_attachment=True)            
     except Exception as e:
-        return jsonify({"message":str(e),"status":False}),500
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)})
 
 @export.route("/export-savings",methods=['GET',"POST"])
 def export_member_savings():
@@ -244,9 +262,11 @@ def export_member_savings():
                              "current_savings":current_savings})                                
         file.close()        
         path = f"excel_files/{name}.csv"
+        loger("info").info("santha exported ")
         return send_file(path, as_attachment=True)      
     except Exception as e:
-        return jsonify({"message":str(e),"status":False}),500   
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)})  
 
 # @export.route('/export-request',methods=['GET',"POST"])
 # def export_request_list():

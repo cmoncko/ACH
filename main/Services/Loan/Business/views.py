@@ -1,10 +1,14 @@
 from flask import Blueprint, request, jsonify
+from main.utils import token_required,permission_required,loger
 from main.Services.Loan.Business.models import BusinessLoans, BusinessLoanPayment
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 from datetime import datetime
 
 business_loan=Blueprint('business_loan',__name__,url_prefix='/business-loan')
+warning="warning"
+info="info"
+error="error"
 
 @business_loan.route('/all-loans')
 def showAllLoans():
@@ -20,7 +24,7 @@ def showAllLoans():
                 name=member.name
                 loans=BusinessLoans.query.filter(BusinessLoans.member_id==id)
                 for loan in loans:
-                    SL_id=loan.id
+                    BL_id=loan.id
                     ref_no=loan.ref_no
                     loan_amount=loan.loan_amount
                     approval_no=loan.approval_no
@@ -30,7 +34,7 @@ def showAllLoans():
                     issued_on=loan.issued_on
                     status=loan.status
                     info={
-                        "SL_id":SL_id,
+                        "BL_id":BL_id,
                         "name":name,
                         "ref_no":ref_no,
                         "loan_amount":loan_amount,
@@ -42,15 +46,19 @@ def showAllLoans():
                         "status":status
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
         else:
             data=[]
             loans=BusinessLoans.query.paginate(page=page,per_page=per_page,error_out=False)
             for loan in loans:
                     mem_id=loan.member_id
-                    SL_id=loan.id
+                    BL_id=loan.id
                     ref_no=loan.ref_no
                     loan_amount=loan.loan_amount
                     approval_no=loan.approval_no
@@ -60,9 +68,11 @@ def showAllLoans():
                     issued_on=loan.issued_on
                     status=loan.status
                     if status==1:
-                        all_emis=BusinessLoanPayment.query.filter(BusinessLoanPayment.loan_id==SL_id)
+                        all_emis=BusinessLoanPayment.query.filter(BusinessLoanPayment.loan_id==BL_id)
                         penalty_ids=[]
                         for emi in all_emis:
+                            if emi.status==1:
+                                continue
                             dateNow=datetime.now().strftime("%Y-%m-%d").split('-')
                             month=int(dateNow[1])
                             year=int(dateNow[0])
@@ -71,20 +81,17 @@ def showAllLoans():
                                 continue
                             elif emi.month<=month and emi.year==year and date>5:
                                 penalty_ids.append(emi.id)
-                        if len(penalty_ids)<1:
-                            pass
-                        else:
+                        if len(penalty_ids)>0:
                             for emi_id in penalty_ids:
                                 entry=BusinessLoanPayment.query.get(emi_id)
                                 entry.penalty_amount=200
                                 entry.total_amount=entry.amount+200
                                 db.session.commit()
 
-                    members=MemberProfile.query.filter(MemberProfile.id==mem_id)
-                    for member in members:
-                         name=member.name
+                    members=MemberProfile.query.filter(MemberProfile.id==mem_id).first()
+                    name=members.name
                     info={
-                        "SL_id":SL_id,
+                        "BL_id":BL_id,
                         "name":name,
                         "ref_no":ref_no,
                         "loan_amount":loan_amount,
@@ -96,28 +103,39 @@ def showAllLoans():
                         "status":status
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
-
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @business_loan.route('/issue/<int:id>',methods=['PUT'])
 def issue(id):
     try:
         data=request.get_json()
         issued_on=data.get('issued_on')
+        if not issued_on:
+            message="issued_on must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         status=data.get('status')
+    
+        if not status:
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         comments=data.get('comments')
         loan=BusinessLoans.query.get(id)
-        print(loan)
+        # print(loan)
         if not loan:
-            return jsonify({
-                "message":"loan not exist."
-            })
+            message="loan not exist"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         loan.issued_on=issued_on
         loan.comments=comments
         loan.status=status
@@ -140,16 +158,13 @@ def issue(id):
             if month>12:
                 month=1
                 year+=1
-        return jsonify({
-            "SL_id":id,
-            "issued_on":loan.issued_on,
-            "comments":loan.comments,
-            "status":loan.status
-        })
+        data=[{"BL_id":id,"issued_on":loan.issued_on,"comments":loan.comments,"status":loan.status}]
+        message=f"Loan issued, id:{id}"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
     except Exception as e:
-           return jsonify({
-               "error":str(e)
-            })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
      
 @business_loan.route('/all-emi/<int:id>')
 def allLoan(id):
@@ -170,35 +185,48 @@ def allLoan(id):
                   "paid_date":paid_date,
                   "status":status}
             data.append(info)
-        return jsonify({
-                "data":data
-            })
+        if not data:
+            message="No data"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+        message="data returned"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @business_loan.route('/pay-loan/<int:id>',methods=['PUT'])
 def payloan(id):
-    data=request.get_json()
-    emi=BusinessLoanPayment.query.get(id)
-    if not emi:
-        return jsonify({
-            "message":"id not found (or) emi not exist."
-        })
-    emi.status=data.get('status')
-    if data.get('status')==1:
+    try:
+        data=request.get_json()
+        emi=BusinessLoanPayment.query.get(id)
+        if not emi:
+            message="emi not exist."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        emi.status=data.get('status')
+        if not data.get('status'):
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         emi.paid_date=data.get('paid_date')
-    else:
-        emi.paid_date=None
-    db.session.commit()
-    return jsonify({
-        "id":id,
-        "status":emi.status,
-        "month":emi.month,
-        "year":emi.year,
-        "paid_date":emi.paid_date,
-        "amount":emi.amount ,
-        "penalty":emi.penalty_amount,
-        "total":emi.total_amount
-    })
+        if not data.get('paid_date'):
+            message="paid_date must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        db.session.commit()
+        data=[{"id":id,
+            "status":emi.status,
+            "month":emi.month,
+            "year":emi.year,
+            "paid_date":emi.paid_date,
+            "amount":emi.amount ,
+            "penalty":emi.penalty_amount,
+            "total":emi.total_amount}]
+        message="loan paid"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
+    except Exception as e:
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

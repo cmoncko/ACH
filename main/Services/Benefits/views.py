@@ -1,10 +1,14 @@
 from flask import Blueprint, request, jsonify
+from main.utils import token_required,permission_required,loger
 from main.Services.Benefits.models import Benefits
 from main.Settings.Services.models import BenefitType
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 
 benefits=Blueprint('benefits',__name__,url_prefix='/benefits')
+warning="warning"
+info="info"
+error="error"
 
 @benefits.route('/all-benefits')
 def allBenefits():
@@ -39,9 +43,13 @@ def allBenefits():
                         "remarks":remarks
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
         else:
             data=[]
             details=Benefits.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
@@ -70,13 +78,16 @@ def allBenefits():
                     "remarks":remarks
                 }
                 data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 
 @benefits.route('/approve/<int:id>',methods=['PUT'])
 def update(id):
@@ -84,20 +95,29 @@ def update(id):
         data=request.get_json()
         entry=Benefits.query.get(id)
         if not entry:
-            return jsonify({
-                "message":f"no benefit for id {id}"
-            })
+            message="benefit not exist"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         entry.issued_on=data.get('issued_on')
+        if not data.get('issued_on'):
+            message="issued_on must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         entry.status=data.get('status')
+        if not data.get('status'):
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         entry.remarks=data.get('remarks')
         db.session.commit()
-        return jsonify({
-            "id":id,
+        data=[{"id":id,
             "status":data.get('status'),
             "issued_on":data.get('issued_on'),
             "remarks":data.get('remarks')
-        })
+        }]
+        message=f"Benefit approved, id:{id}"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

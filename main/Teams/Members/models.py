@@ -76,6 +76,7 @@ class MemberProfile(db.Model):
             age=nyear-dyear
         return {
            "id":self.id,
+           "user_id":self.user_id,
            "name":self.name, 
            "age":age,
            "gender":self.gender,

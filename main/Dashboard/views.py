@@ -18,7 +18,7 @@ from main.Services.Loan.Educational.models import EducationalLoanPayment
 from main.Services.Loan.Business.models import BusinessLoanPayment
 from main.Accounts.Income.models import Income
 from main.Accounts.Expense.models import Expense
-
+from main.utils import loger
 
 dashboard=Blueprint("dashboard",__name__,url_prefix="/dashboard")
 
@@ -130,50 +130,43 @@ def teams():
             total_count=member_count+incharge_count
             info={"city":total_count}
             team_count_by_place.append(info)
-
-        return jsonify({"Teams":{
-            "Total teams":total_team,
-            "member":member,
-            "leader":leader,
-            "incharge":incharge
-        },"Request and approvals":{
-            "request":requests,
-            "under_review":under_review,
-            "approved":approved,
-            "rejected":rejected
-        },"Benefits":{
-            "under_review":bunder_review,
-            "approved":bapproved,
-            "rejected":brejected
-        },"Pension":{
-            "under_review":punder_review,
-            "approved":papproved,
-            "rejected":prejected
-        },"Savings Loans":{
-            "under_review":slunder_review,
-            "approved":slapproved,
-            "rejected":slrejected
-        },"Bussiness Loan":{
-            "under_review":blunder_review,
-            "approved":blapproved,
-            "rejected":blrejected
-        },"Educational Loan":{
-            "under_review":elunder_review,
-            "approved":elapproved,
-            "rejected":elrejected
-        },"Team count by place":{
-            "Teams count by place":team_count_by_place
-        }
-        
-        }) 
+        data=[{"Teams":{"Total teams":total_team,
+                  "member":member,
+                  "leader":leader,
+                  "incharge":incharge},
+              "Request and approvals":{"request":requests,
+                                      "under_review":under_review,
+                                      "approved":approved,
+                                      "rejected":rejected},
+              "Benefits":{"under_review":bunder_review,
+                          "approved":bapproved,
+                          "rejected":brejected
+                          },
+              "Pension":{"under_review":punder_review,
+                          "approved":papproved,
+                          "rejected":prejected},
+              "Savings Loans":{"under_review":slunder_review,
+                              "approved":slapproved,
+                              "rejected":slrejected},
+              "Bussiness Loan":{"under_review":blunder_review,
+                                "approved":blapproved,
+                                "rejected":blrejected},
+                                "Educational Loan":{"under_review":elunder_review,
+                                "approved":elapproved,
+                                "rejected":elrejected},
+              "Team count by place":{"Teams count by place":team_count_by_place}}]
+        if not data:
+            loger("warning").warning("No data returned")
+            return jsonify({"status":False,"data":data,"msg":"No data returned","error":""}),200
+        loger("info").info("Dashboard/General viewed")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
-
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)}),500
+    
 @dashboard.route("/finance")
 def totalIncome():
-    # try:
+    try:
         #monthly income and expense
         monthly=datetime.now()
         month=monthly.month
@@ -195,6 +188,7 @@ def totalIncome():
 
         #Savigs Loans:
         released_amount=db.session.execute(text("SELECT sum(loan_amount) from savings_loans where status=1"))
+        release_amount=0.00
         for i in released_amount:
             if i[0] is None:
                 release_amount=float(0)
@@ -202,6 +196,7 @@ def totalIncome():
                 release_amount=float(i[0])
 
         received_amount=db.session.execute(text("select sum(amount) from ACH.savings_loans_payment where status=1"))
+        receive_amount=0.00
         for i in received_amount:
             if i[0] is None:
                 receive_amount=float(0)
@@ -212,6 +207,7 @@ def totalIncome():
 
         #Bussiness Loan:
         rel_business=db.session.execute(text("select sum(loan_amount) from ACH.business_loans where status=1"))
+        business_rel=0.00
         for i in rel_business:
             if i[0] is None:
                 business_rel=float(0)
@@ -219,6 +215,7 @@ def totalIncome():
                 business_rel=float(i[0])
 
         receive_business=db.session.execute(text('select sum(amount) from ACH.business_loan_payment where status=1'))
+        business_receive=0.00
         for i in receive_business:
             if i[0] is None:
                 business_receive=float(0)
@@ -229,6 +226,7 @@ def totalIncome():
         
         #Education Loan:
         rel_education=db.session.execute(text("select sum(loan_amount) from ACH.education_loans where status=1"))
+        education_rel=0.00
         for i in rel_education:
             if i[0]==None:
                 education_rel=float(0)
@@ -236,6 +234,7 @@ def totalIncome():
                 education_rel=float(i[0])
 
         receive_education=db.session.execute(text("select sum(amount) from ACH.educational_loan_payment where status=1"))
+        education_receive=0.00
         for i in receive_education:
             if i[0]== None:
                 education_receive=float(0)
@@ -256,6 +255,7 @@ def totalIncome():
             if i.status==1:
                 count+=1
         released_Pension=db.session.execute(text("select sum(total_amount_issued) from ACH.pension"))
+        pension_released=0.00
         for i in released_Pension:
             if i[0] is None:
                 pension_released=float(0)
@@ -264,6 +264,7 @@ def totalIncome():
 
         #Santha 
         total_santha=db.session.execute(text("select sum(santha_amount) from ACH.santha_payments"))
+        santha_total=0.00
         for i in total_santha:
             if i[0] is None:
                 santha_total=float(0)
@@ -271,6 +272,7 @@ def totalIncome():
                 santha_total=float(i[0])
 
         received_santha=db.session.execute(text("select sum(received_amount) from ACH.santha_payments"))
+        santha_receive=0.00
         for i in received_santha:
             if i[0] is None:
                 santha_receive=float(0)
@@ -280,6 +282,7 @@ def totalIncome():
 
         #Income
         tot_income=db.session.execute(text("select sum(amount) from ACH.income"))
+        income_total=0.00
         for i in tot_income:
             if i[0] is None:
                 income_total=float(0)
@@ -288,6 +291,7 @@ def totalIncome():
 
         #Expense
         tot_expense=db.session.execute(text("select sum(amount) from ACH.expense"))
+        expense_total=0.00
         for i in tot_expense:
             if i[0] is None:
                 expense_total=float(0)
@@ -296,6 +300,7 @@ def totalIncome():
         
         #Amount in Bank
         tot_bank_amount=db.session.execute(text("select sum(amount) from ACH.bank_transactions where transaction_type=0"))
+        bank_amount=0.00
         for i in tot_bank_amount:
             if i[0] is None:
                 bank_amount=float(0)
@@ -361,8 +366,7 @@ def totalIncome():
             if i.paid_date in dates:
                 tot_weekly_loans+=i.amount
 
-
-        return jsonify({
+        data=[{
             "Monthly Income/Expense":{
             "Total Income":total_monthly_income,
             "Total Expense":total_monthly_expense
@@ -413,6 +417,12 @@ def totalIncome():
             "savings":tot_weekly_savings,
             'loans':tot_weekly_loans
             }
-        })
-    # except Exception as e:
-    #     return jsonify({"":str(e)})
+        }]
+        if not data:
+            loger("info").info("No data returned.")
+            return jsonify({"status":False,"data":"","msg":"No data returned","error":""}),200
+        loger("info").info("Dashboard/Finance viewed.")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
+    except Exception as e:
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","error":str(e)}),500

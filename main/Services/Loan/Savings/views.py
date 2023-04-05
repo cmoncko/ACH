@@ -1,10 +1,14 @@
 from flask import Blueprint, request, jsonify
+from main.utils import token_required,permission_required,loger
 from main.Services.Loan.Savings.models import SavingsLoans, SavingsLoansPayment
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 from datetime import datetime
 
 savings_loan=Blueprint('savings_loan',__name__,url_prefix='/savings-loan')
+warning="warning"
+info="info"
+error="error"
 
 @savings_loan.route('/all-loans')
 def showAllLoans():
@@ -42,9 +46,13 @@ def showAllLoans():
                         "status":status
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
         else:
             data=[]
             loans=SavingsLoans.query.paginate(page=page,per_page=per_page,error_out=False)
@@ -80,9 +88,8 @@ def showAllLoans():
                                 entry.total_amount=entry.amount+200
                                 db.session.commit()
 
-                    members=MemberProfile.query.filter(MemberProfile.id==mem_id)
-                    for member in members:
-                         name=member.name
+                    members=MemberProfile.query.get(mem_id)
+                    name=members.name
                     info={
                         "SL_id":SL_id,
                         "name":name,
@@ -96,27 +103,38 @@ def showAllLoans():
                         "status":status
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
-
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @savings_loan.route('/issue/<int:id>',methods=['PUT'])
 def issue(id):
-     try:
+    try:
         data=request.get_json()
         issued_on=data.get('issued_on')
+        if not issued_on:
+            message="issued_on must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         status=data.get('status')
+    
+        if not status:
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         comments=data.get('comments')
         loan=SavingsLoans.query.get(id)
         if not loan:
-            return jsonify({
-                "message":"loan not exist."
-            })
+            message="loan not exist"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         loan.issued_on=issued_on
         loan.comments=comments
         loan.status=status
@@ -139,16 +157,13 @@ def issue(id):
             if month>12:
                 month=1
                 year+=1
-        return jsonify({
-            "SL_id":id,
-            "issued_on":loan.issued_on,
-            "comments":loan.comments,
-            "status":loan.status
-        })
-     except Exception as e:
-          return jsonify({
-               "error":str(e)
-            })
+        data=[{"BL_id":id,"issued_on":loan.issued_on,"comments":loan.comments,"status":loan.status}]
+        message=f"Loan issued, id:{id}"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
+    except Exception as e:
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
      
 @savings_loan.route('/all-emi/<int:id>')
 def allLoan(id):
@@ -169,35 +184,48 @@ def allLoan(id):
                   "paid_date":paid_date,
                   "status":status}
             data.append(info)
-        return jsonify({
-                "data":data
-            })
+        if not data:
+            message="No data"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+        message="data returned"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @savings_loan.route('/pay-loan/<int:id>',methods=['PUT'])
 def payloan(id):
-    data=request.get_json()
-    emi=SavingsLoansPayment.query.get(id)
-    if not emi:
-        return jsonify({
-            "message":"id not found (or) emi not exist."
-        })
-    emi.status=data.get('status')
-    if data.get('status')==1:
+    try:
+        data=request.get_json()
+        emi=SavingsLoansPayment.query.get(id)
+        if not emi:
+            message="emi not exist."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        emi.status=data.get('status')
+        if not data.get('status'):
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         emi.paid_date=data.get('paid_date')
-    else:
-        emi.paid_date=None
-    db.session.commit()
-    return jsonify({
-        "id":id,
-        "status":emi.status,
-        "month":emi.month,
-        "year":emi.year,
-        "paid_date":emi.paid_date,
-        "amount":emi.amount,
-        "penalty":emi.penalty_amount,
-        "total":emi.total_amount 
-    })
+        if not data.get('paid_date'):
+            message="paid_date must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        db.session.commit()
+        data=[{"id":id,
+            "status":emi.status,
+            "month":emi.month,
+            "year":emi.year,
+            "paid_date":emi.paid_date,
+            "amount":emi.amount ,
+            "penalty":emi.penalty_amount,
+            "total":emi.total_amount}]
+        message="loan paid"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
+    except Exception as e:
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

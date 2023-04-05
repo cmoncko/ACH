@@ -1,9 +1,13 @@
 from flask import Blueprint,request,jsonify,session
+from main.utils import token_required,permission_required,loger
 from main.Services.AccountClosing.models import AccountClosing
 from main.Teams.Members.models import MemberProfile
 from main.extensions import db
 
 account_closing=Blueprint('accountclosing',__name__,url_prefix="/account-closing")
+warning="warning"
+info="info"
+error="error"
 
 @account_closing.route('/show')
 def show():
@@ -19,7 +23,7 @@ def show():
                 name=i.name
                 details=AccountClosing.query.filter(AccountClosing.member_id==member_id)
                 for i in details:
-                    i=i.id
+                    id=i.id
                     member_id=i.member_id
                     status=i.status
                     closed_by=i.closed_by
@@ -39,9 +43,13 @@ def show():
                         "name":name
                         }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),204
         else:
             data=[]
             details=AccountClosing.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
@@ -66,24 +74,38 @@ def show():
                     "name":name
                     }
                 data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),204
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 
 @account_closing.route("/update/<int:id>",methods=['PUT'])
 def update(id):
     try:
-        
         user=session.get("userData")
         user_id=user.get("userId")
         data =request.get_json()
         entry=AccountClosing.query.get(id)
+        if not entry:
+            message="closing request not exist"
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         status=data.get("status")
+        if not status:
+            message="status must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         closed_on=data.get("closed_on")
+        if not closed_on:
+            message="closed_on must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         remarks=data.get("remarks")
         entry.status=status
         entry.closed_by=user_id
@@ -91,17 +113,17 @@ def update(id):
         entry.remarks=remarks
 
         db.session.commit()
-
-        return jsonify({
+        data={"id":entry.id,
             "status":entry.status,
             "closed_by":entry.closed_by,
             "closed_on":entry.closed_on,
-            "remarks":entry.remarks
-        })
+            "remarks":entry.remarks}
+        message=f"Closing request accepted, id:{id}"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),204
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 
     
 

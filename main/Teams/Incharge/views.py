@@ -1,8 +1,7 @@
 from flask import Blueprint,request,jsonify
-from main.utils import permission_required,token_required
+from main.utils import permission_required,token_required,loger
 from main.Teams.Incharge.models import Employee
 from main.extensions import db
-from datetime import datetime
 
 incharge=Blueprint('incharge',__name__,url_prefix='/incharge')
 
@@ -11,27 +10,53 @@ incharge=Blueprint('incharge',__name__,url_prefix='/incharge')
 @permission_required('edit_team')
 def newIncharge():
     data=request.get_json()
-    status=data.get('status')
     name=data.get('name')
     dob=data.get('dob')
     image_path=data.get('image_path')
     gender=data.get('gender')
-    address=data.get('address')
+    if not gender:
+        gender=0
+    address=data.get("address")
+    if not address:
+        loger('warning').warning("address must entered.")
+        return jsonify({"status":False,"data":"","message":"address must entered.","error":""}),200
     city=data.get('city')
+    if not city:
+        loger('warning').warning("city must entered.")
+        return jsonify({"status":False,"data":"","message":"city must entered.","error":""}),200
     district=data.get('district')
+    if not district:
+        loger('warning').warning("district must entered.")
+        return jsonify({"status":False,"data":"","message":"district must entered.","error":""}),200
     state=data.get('state')
+    if not state:
+        loger('warning').warning("state must entered.")
+        return jsonify({"status":False,"data":"","message":"state must entered.","error":""}),200
     pincode=data.get('pincode')
+    if not pincode:
+        loger('warning').warning("pincode must entered.")
+        return jsonify({"status":False,"data":"","message":"pincode must entered.","error":""}),200
     aadhar=data.get('aadhar')
+    if not aadhar:
+        loger('warning').warning("aadhar no must entered.")
+        return jsonify({"status":False,"data":"","message":"aadhar no must entered.","error":""}),200
     mobile=data.get('mobile')
+    if not mobile:
+        loger('warning').warning("mobile.no must entered.")
+        return jsonify({"status":False,"data":"","message":"mobile no must entered.","error":""}),200
     join_date=data.get('join_date')
+    if not join_date:
+        loger('warning').warning("join date must entered.")
+        return jsonify({"status":False,"data":"","message":"join date must entered.","error":""}),200
     salary=data.get('salary')
+    if not salary:
+        loger('warning').warning("salary must entered.")
+        return jsonify({"status":False,"data":"","message":"salary must entered.","error":""}),200
     relieving_date=data.get('relieving_date')   
-    employee_type=0
 
     try:
         incharge=Employee(name=name,
                         dob=dob,
-                        status=status,
                         image_path=image_path,
                         gender=gender,
                         address=address,
@@ -43,17 +68,14 @@ def newIncharge():
                         mobile=mobile,
                         join_date=join_date,
                         salary=salary,
-                        relieving_date=relieving_date,
-                        employee_type=employee_type)
+                        relieving_date=relieving_date)
         db.session.add(incharge)
         db.session.commit()
-        return jsonify({
-            "message":"Incharge added successully"
-        })
+        loger("info").info("one incharge added successfully,")
+        return jsonify({"status":True,"data":Employee.to_json(incharge),"msg":"one incharge added successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","eroor":str(e)}),500
 
 @incharge.route('/show-incharges')
 @token_required
@@ -74,90 +96,23 @@ def showIncharges():
                                               (Employee.mobile.contains(search)) | 
                                               (Employee.id.contains(search)))
                                               & (Employee.employee_type==0))
-            data=[]
-            for employee in employees:
-                id=employee.id
-                name=employee.name
-                dob=employee.dob
-                dob_date_list=str(dob).split('-') #it return ['year','month','date']
-                day=datetime.now().strftime("%Y-%m-%d")# date of today
-                date_now=day.split("-") #it return ['year','month','date']
-                dyear=int(dob_date_list[0]) # convert string to integer
-                dmonth=int(dob_date_list[1]) # '''
-                ddate=int(dob_date_list[2]) # '''
-                nyear=int(date_now[0]) # '''
-                nmonth=int(date_now[1]) # '''
-                ndate=int(date_now[2]) # '''
-
-                # check the month and date grater than or equal to dob month and date
-                if (nmonth>= dmonth) & (ndate>=ddate): 
-                    age=nyear-dyear # if true return absoult value
-                else:
-                    age=nyear-dyear
-                mobile_no=employee.mobile
-                address=employee.address
-                gender=employee.gender
-
-                info={"id":id,
-                      "name":name,
-                      "gender":gender,
-                      "age":age,
-                      "mobile":mobile_no,
-                      "address":address}
-                
-                data.append(info)
-
-            return jsonify({
-                "data": data,
-                "total_incharges": total_incharges
-            })
+            data=[Employee.to_json(i) for i in employees]
+            if not data:
+                loger("warning").warning("No data returned.")
+                return jsonify({"status":False,"data":"","message":"No data returned.","error":""}),200
+            return jsonify({"status":True,"msg":"","data": data,"total_incharges":total_incharges,"error":""}),201
         else:
             employees=Employee.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
-            data=[]
-            for employee in employees:
-                if employee.employee_type!=0:
-                    continue
-                id=employee.id
-                name=employee.name
-                dob=employee.dob
-                dob_date_list=str(dob).split('-') #it return ['year','month','date']
-                day=datetime.now().strftime("%Y-%m-%d")# date of today
-                date_now=day.split("-") #it return ['year','month','date']
-                dyear=int(dob_date_list[0]) # convert string to integer
-                dmonth=int(dob_date_list[1]) # '''
-                ddate=int(dob_date_list[2]) # '''
-                nyear=int(date_now[0]) # '''
-                nmonth=int(date_now[1]) # '''
-                ndate=int(date_now[2]) # '''
-
-                # check the month and date grater than or equal to dob month and date
-                if (nmonth>= dmonth) & (ndate>=ddate): 
-                    age=nyear-dyear # if true return absoult value
-                else:
-                    age=nyear-dyear
-                mobile_no=employee.mobile
-                address=employee.address
-                gender=employee.gender
-
-                info={"id":id,
-                      "name":name,
-                      "gender":gender,
-                      "age":age,
-                      "mobile":mobile_no,
-                      "address":address}
-                
-                data.append(info)
-            
-            return jsonify({
-                "data":data,
-                "total_incharges":total_incharges
-            })
+            data=[Employee.to_json(i) for i in employees]
+            if not data:
+                loger("warning").warning("No data returned.")
+                return jsonify({"status":False,"data":"","message":"No data returned.","error":""}),200
+            return jsonify({"status":True,"msg":"","data": data,"total_incharges":total_incharges,"error":""}),201  
 
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })    
-
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","eroor":str(e)}),500
+    
 @incharge.route('/incharge-profile/<int:id>')
 @token_required
 @permission_required('read_team')
@@ -165,14 +120,13 @@ def inchargeProfile(id):
     try:
         incharge=Employee.query.get(id)
         if not incharge:
-            return jsonify({
-                "message":"incharge not exist."
-            })
-        return jsonify(Employee.profile(incharge))
+            loger("warning").warning("incharge not exist.")
+            return jsonify({"status":False,"data":"","message":"incharge not exist.","error":""}),200
+        loger("info").info("incharge profile viewed")
+        return jsonify({"status":True,"data":[Employee.profile(incharge)],"msg":"","error":""}),201
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })    
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","eroor":str(e)}),500   
     
 @incharge.route('/update-incharge/<int:id>',methods=['PUT'])
 @token_required
@@ -182,9 +136,8 @@ def updateIncharge(id):
         data=request.get_json()
         incharge=Employee.query.get(id)
         if not incharge:
-            return jsonify({
-                "message":"incharge not exist."
-            })
+            loger("warning").warning("incharge not exist.")
+            return jsonify({"status":False,"data":"","message":"incharge not exist.","error":""}),200
         incharge.status=data.get('status')
         incharge.name=data.get('name')
         incharge.dob=data.get('dob')
@@ -198,13 +151,11 @@ def updateIncharge(id):
         incharge.mobile=data.get('mobile')
         incharge.join_date=data.get('join_date')  
         db.session.commit()
-        return jsonify({
-            "message":"Incharge updated successully"
-            })
+        loger("info").info("incharge updated successfully.")
+        return jsonify({"status":True,"data":[Employee.to_json(incharge)],"msg":"incharge updated successfully.","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","eroor":str(e)}),500
 
 @incharge.route('/delete-incharge/<int:id>',methods=['DELETE'])
 @token_required
@@ -213,15 +164,12 @@ def deleteIncharge(id):
     try:
         incharge=Employee.query.get(id)
         if not incharge:
-                return jsonify({
-                    "message":"incharge not exist."
-                })
+            loger("warning").warning("incharge not exist.")
+            return jsonify({"status":False,"data":"","message":"incharge not exist.","error":""}),200
         db.session.delete(incharge)
         db.session.commit()
-        return jsonify({
-            "message":"incharge deleted successfully."
-        })
+        loger("info").info("incharge deleted successfully.")
+        return jsonify({"status":True,"data":"","msg":"incharge deleted successfully.","error":""}),201
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"data":"","msg":"","eroor":str(e)}),500

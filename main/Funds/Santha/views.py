@@ -4,7 +4,10 @@ from datetime import datetime
 from main.Settings.Funds.models import MasterData
 from main.Teams.Members.models import MemberProfile
 from main.Funds.Santha.models import SanthaPayments
-
+from main.utils import token_required,permission_required,loger
+warning="warning"
+info="info"
+error="error"
 santha=Blueprint('santha',__name__,url_prefix="/santha")
 
 @santha.route('/pay-santha',methods=['POST'])
@@ -12,40 +15,54 @@ def paySantha():
     try:
         data=request.get_json()
         member_id=data.get('member_id')
+        if not member_id:
+            loger('warning').warning("member_id must be  entered.")
+            return jsonify({"status":False,"data":"","message":"member_id must be entered.","error":""}),200
+        member=MemberProfile.query.filter(MemberProfile.id==member_id).first()
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         santha_for_year=data.get('santha_for_year')
+        if not santha_for_year:
+            message="santha_for_year must be entered"
+            loger('warning').warning("santha_for_year must be entered.")
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        santha_year=MasterData.query.filter_by(value=santha_for_year).first()
+        if not santha_year:
+            message="santha for year not exist."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         santha_amount=MasterData.query.filter_by(property="Amount Per Year Rs").first()
-        if not santha_amount.value or santha_amount.value=="":
-            return jsonify({
-                "message":"Add santha per year amount at (Settings -> Funds -> Santha -> Amount Per Year Rs)"
-            })
+        if not santha_amount:
+            message="Add santha per year amount at (Settings -> Funds -> Santha -> Amount Per Year Rs)."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         santha_amount=int(santha_amount.value)
         received_amount=data.get('received_amount')
+        if not received_amount:
+            loger('warning').warning("received_amount must be entered.")
+            return jsonify({"status":False,"data":"","message":"received_amount must be entered.","error":""}),200
         received_date=data.get('received_date')
-
-        member=[MemberProfile.to_json(i) for i in MemberProfile.query.filter(MemberProfile.id==member_id)]
-
-        if len(member)<1:
-            return jsonify({
-                "message":"Member is not exist"
-            })
-        else:
-            entry=SanthaPayments(member_id=member_id,
-                                 santha_for_year=santha_for_year,
-                                 santha_amount=santha_amount,
-                                 received_amount=received_amount,
-                                 received_date=received_date)
-
-            db.session.add(entry)
-            db.session.commit()
-
-            return jsonify({
-                "message":"santha details added successfully."
-            })
-    
+        if not received_date:
+            loger('warning').warning("received_date must be entered.")
+            return jsonify({"status":False,"data":"","message":"received_date must be entered.","error":""}),200
+        entry=SanthaPayments(member_id=member_id,
+                             santha_for_year=santha_for_year,
+                             santha_amount=santha_amount,
+                             received_amount=received_amount,
+                             received_date=received_date)
+        db.session.add(entry)
+        db.session.commit()
+        data=[{"member_id":member_id,
+               "santha_for_year":santha_for_year,
+               "santha_amount":santha_amount,
+               "received_amount":received_amount,
+               "received_date":received_date}]
+        loger("info").info("santha details added successfully,")
+        return jsonify({"status":True,"data":data,"msg":"santha details added successfully,","error":""}),201
     except Exception as e:
-        return jsonify({
-            "message":str(e)
-        })
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 
 @santha.route('/santha-details')
 def santhaDetails():
@@ -113,10 +130,11 @@ def santhaDetails():
                     "days_elapsed":int(days_elapsed)
                 }
                 data.append(info)
-
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                loger("warning").warning("no data returned")
+                return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+            loger("info").info("santha details viewed.")
+            return jsonify({"status":True,"data":data,"msg":"","error":""}),200
         else:
             data=[]
             members=MemberProfile.query.paginate(page=int(page),per_page=int(per_page),error_out=False)
@@ -178,18 +196,21 @@ def santhaDetails():
                     "days_elapsed":int(days_elapsed)
                 }
                 data.append(info)
-
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                 loger("warning").warning("no data returned")
+                 return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+            loger("info").info("santha details viewed.")
+            return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
-    
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
 @santha.route('/profile/<int:id>')
 def profileDetails(id):
     try:
+        member=MemberProfile.query.get(id)
+        if not member:
+            loger('warning').warning("member not exist.")
+            return jsonify({"status":False,"data":"","message":"member not exist.","error":""}),200
         details=SanthaPayments.query.filter(SanthaPayments.member_id==id)
         data=[]
         for detail in details:
@@ -205,8 +226,11 @@ def profileDetails(id):
                 "received_date":str(received_date)
             }
             data.append(info)
-        return jsonify({
-            "data":data
-        })
+        if not data:
+                loger("warning").warning("no data returned")
+                return jsonify({"status":False,"data":data,"msg":"","error":""}),200
+        loger("info").info("santha details viewed.")
+        return jsonify({"status":True,"data":data,"msg":"","error":""}),200
     except Exception as e:
-        return jsonify({"error":str(e)})
+        loger("error").error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500

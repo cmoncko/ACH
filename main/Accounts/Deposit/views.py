@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from main.utils import token_required,permission_required,loger
 from main.Accounts.Deposit.models import BankTransactions
 from main.Settings.Accounts.models import BankAccounts
 from main.Teams.Incharge.models import Employee
@@ -6,67 +7,95 @@ from main.extensions import db
 from uuid import uuid4
 
 deposit=Blueprint('deposit',__name__,url_prefix='/deposit')
+warning="warning"
+info="info"
+error="error"
 
-@deposit.route('/bank-dropdown')
-def bankDropdown():
-    try:
-        details=BankAccounts.query.all()
-        data=[]
-        for i in details:
-            id=i.id
-            branch=i.branch
-            acc_number=i.acc_number
-            account_name=i.account_name
-            IFSC_code=i.IFSC_code
-            info={
-                "id":id,
-                "acc_number":acc_number,
-                "account_name":account_name,
-                "branch":branch,
-                "IFSC_code":IFSC_code
-                  }
-            data.append(info)
-        return jsonify({
-            "data":data
-        })
-    except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+# @deposit.route('/bank-dropdown')
+# def bankDropdown():
+#     try:
+#         details=BankAccounts.query.all()
+#         data=[]
+#         for i in details:
+#             id=i.id
+#             branch=i.branch
+#             acc_number=i.acc_number
+#             account_name=i.account_name
+#             IFSC_code=i.IFSC_code
+#             info={
+#                 "id":id,
+#                 "acc_number":acc_number,
+#                 "account_name":account_name,
+#                 "branch":branch,
+#                 "IFSC_code":IFSC_code
+#                   }
+#             data.append(info)
+#         return jsonify({
+#             "data":data
+#         })
+#     except Exception as e:
+#         return jsonify({
+#             "error":str(e)
+#         })
     
-@deposit.route('/incharge-dropdown')
-def inchargeDropdown():
-    try:
-        empDetails=Employee.query.all()
-        data=[]
-        for i in empDetails:
-            id=i.id
-            name=i.name
-            mobile_number=i.mobile
-            info={
-                "id":id,
-                "name":name,
-                "mobile_number":mobile_number
-                  }
-            data.append(info)
-        return jsonify({
-            "data":data
-        })
-    except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+# @deposit.route('/incharge-dropdown')
+# def inchargeDropdown():
+#     try:
+#         empDetails=Employee.query.all()
+#         data=[]
+#         for i in empDetails:
+#             id=i.id
+#             name=i.name
+#             mobile_number=i.mobile
+#             info={
+#                 "id":id,
+#                 "name":name,
+#                 "mobile_number":mobile_number
+#                   }
+#             data.append(info)
+#         return jsonify({
+#             "data":data
+#         })
+#     except Exception as e:
+#         return jsonify({
+#             "error":str(e)
+#         })
     
 @deposit.route('/add-deposit-details',methods=["POST"])
 def addDepositDetails():
     try:
         data=request.get_json()
         bank_id=data.get('bank_id')
-        transfer_type=data.get('transfer_type')
+        if not bank_id:
+            message="bank_id be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        detail=BankAccounts.query.get(bank_id)
+        if not detail:
+            message="bank detail not exist."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        transfer_type=0
         transaction_date=data.get('transaction_date')
+        if not transaction_date:
+            message="transaction_date must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         amount=data.get('amount')
-        balance=100
+        if not amount:
+            message="amount must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
+        balance=0
+        balances=BankTransactions.query.filter_by(bank_id=bank_id)
+        for l_balance in balances:
+            balance=l_balance
+        balance+=amount
         deposited_by=data.get('deposited_by')
+        if not deposited_by:
+            message="deposited_by must be entered."
+            loger(warning).warning(message)
+            return jsonify({"status":False,"data":"","message":message,"error":""}),200
         reference_no=uuid4().hex[:8]
         entry=BankTransactions(bank_id=bank_id,
                                transaction_date=transaction_date,
@@ -77,8 +106,7 @@ def addDepositDetails():
                                reference_no=reference_no,)
         db.session.add(entry)
         db.session.commit()
-        return jsonify({
-            "id":entry.id,
+        data=[{"id":entry.id,
             "bank_id":bank_id,
             "transfer_type":transfer_type,
             "transaction_date":transaction_date,
@@ -87,11 +115,13 @@ def addDepositDetails():
             "balance":balance,
             "deposited_by":deposited_by,
             "reference_no":reference_no
-            })
+            }]
+        message="deposit added"
+        loger(info).info(message)
+        return jsonify({"status":True,"data":data,"message":message,"error":""}),201
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
     
 @deposit.route('/show-deposit-details')
 def showDepositDetails():
@@ -119,9 +149,13 @@ def showDepositDetails():
                     "name":name
                     }
                     data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
         else:
             deposits=BankTransactions.query.paginate(page=page,per_page=per_page,error_out=False)
             data=[]
@@ -141,10 +175,13 @@ def showDepositDetails():
                     "name":employee.name
                     }
                 data.append(info)
-            return jsonify({
-                "data":data
-            })
+            if not data:
+                message="No data"
+                loger(warning).warning(message)
+                return jsonify({"status":False,"data":data,"message":message,"error":""}),200
+            message="data returned"
+            loger(info).info(message)
+            return jsonify({"status":True,"data":data,"message":message,"error":""}),200
     except Exception as e:
-        return jsonify({
-            "error":str(e)
-        })
+        loger(error).error(str(e))
+        return jsonify({"status":False,"msg":"","error":str(e)}),500
