@@ -1,5 +1,0 @@
-user_id,name,DOB,gender,address,city,state,district,pincode,auth_data,auth_type_id,mobile_no,join_date,is_leader,nominee_dob,nominee_mobile_no,nominee_aadhar_no,leaving_date,nominee_name,leader_id,incharge_id,comments,nominee_DOB,nominee_mobileno,nominee_aadharno,nominee_relation
-rahgul00,rahgul,1997-10-13,0,"st,joseph's colony",thoothor,tamilnadu,kanyakumari,629176,789456123147,0,1234567898,2021-01-01,0,1995-02-01,78945612378,789456325122,,rahgul,3,1,,,,,1
-nani00,nani,1997-10-10,1,"st,joseph's colony",thoothor,tamilnadu,kanyakumari,629176,789456123147,0,1234567898,2021-01-01,0,1995-02-01,78945612378,789456325122,,rahgul,3,1,,,,,1
-rahgul01,rahgul,1997-10-13,0,"st,joseph's colony",thoothor,tamilnadu,kanyakumari,629176,789456123149,0,1234267898,2021-01-01,1,1995-02-01,78945612378,789456325122,,rahgul,,1,,,,,1
-4,nani,1997-10-10,1,"st,joseph's colony",thoothor,tamilnadu,kanyakumari,629176,789456163147,0,123456798,2021-01-01,1,1995-02-01,78945612378,789456325122,,rahgul,,1,,,,,1

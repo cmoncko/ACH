@@ -1,2 +1,0 @@
-member_id,member_name,issued_date,savings_loan_id,status,status_name,member_id,loan_amount,emi_amount,interest_rate,final_payment_amount,monthly_penalty_amount,penalty_interest_percentage,months_to_charge_penalty_interest,number_of_emi,tenure,emi_start_date,loan_end_date,emi_on_date,comments,loan_approved_by,created_on,approved_on,approved_no,reference_no
-1,rahgul002,2022-04-01,1,1,Closed,1,10000.0,461.45,10.0,11074.78,,,,2,24 months,2022-05-01,2024-04-01,None,vsdfg,1,2022-06-15 23:00:50,2022-02-03,220704561,164382112

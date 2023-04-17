@@ -1,3 +1,0 @@
-request_id,name,member_id,refer_no,request_type,date,applied_on,day_elapsed,approved_status,pension_amount,loan_amount,number_of_emi,interest_rate,benefit_type,comments
-2,shiko,1,,pension,,2023-01-09,74,approved,,,,,,he was a greatfull.
-1,shiko,1,,savings,,2023-01-09,74,approved,833.33,10000.0,12,66.67,,he was a greatfull.
