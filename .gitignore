@@ -1,2 +1,4 @@
 .cko
+main/log/
 .log
+*.log
