@@ -1,5 +1,0 @@
-2023-04-10 14:36:34,125 - WARNING - views.py - showIncomeDetails - 97 - No data
-2023-04-10 14:37:40,755 - WARNING - views.py - delete - 140 - income not exist.
-2023-04-10 16:58:23,447 - WARNING - views.py - sendRequest - 35 - request_loan_type must entered.
-2023-04-10 17:04:14,306 - WARNING - views.py - sendRequest - 47 - Eligibility not exist. Add eligibility in settings.
-2023-04-10 17:04:22,510 - WARNING - views.py - sendRequest - 35 - request_loan_type must entered.
