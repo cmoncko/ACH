@@ -1,0 +1,2 @@
+2023-04-11 08:34:09,630 - ERROR - views.py - sendRequest - 116 - unsupported operand type(s) for /: 'int' and 'NoneType'
+2023-04-11 08:38:50,503 - ERROR - views.py - sendRequest - 117 - unsupported operand type(s) for /: 'int' and 'NoneType'

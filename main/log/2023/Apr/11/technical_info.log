@@ -1,0 +1,8 @@
+2023-04-11 08:22:32,642 - WARNING - views.py - sendRequest - 47 - Eligibility not exist. Add eligibility in settings.
+2023-04-11 08:30:25,207 - INFO - views.py - eligibility - 27 - eligibility added successfully.
+2023-04-11 08:30:37,247 - WARNING - views.py - sendRequest - 51 - Savings not exist.
+2023-04-11 08:32:41,726 - INFO - views.py - savingsPayment - 65 - saving payment details added successfully,
+2023-04-11 08:33:16,400 - WARNING - views.py - sendRequest - 56 - Insufficient fund in savings balance.
+2023-04-11 08:33:59,045 - INFO - views.py - savingsPayment - 65 - saving payment details added successfully,
+2023-04-11 08:39:17,380 - INFO - views.py - sendRequest - 114 - request sended successfully,
+2023-04-12 10:57:10,250 - INFO - views.py - withdraw - 126 - saving withdraw detail added successfully,
