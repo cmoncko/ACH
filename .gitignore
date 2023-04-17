@@ -3,4 +3,4 @@ cko
 /cko
 .venv
 /venv
-log/
+*.log
